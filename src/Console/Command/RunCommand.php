@@ -75,7 +75,6 @@ final class RunCommand extends Command implements SignalableCommandInterface
     {
         $taskName = $input->getArgument('task');
         $taskArgs = $input->getArgument('args') ?? [];
-        [$arguments, $options] = $this->parseTaskArgs($taskArgs);
         $runtimeVariables = RuntimeVariableParser::parse($input->getOption('define'));
 
         try {
@@ -83,6 +82,8 @@ final class RunCommand extends Command implements SignalableCommandInterface
             if (!$metadata instanceof TaskMetadata) {
                 throw TaskNotFoundException::forTask($taskName);
             }
+
+            [$arguments, $options] = $this->parseTaskArgs($taskArgs, $metadata);
 
             return $this->executeTask($metadata, $arguments, $options, $output, $runtimeVariables);
         } catch (TaskNotFoundException $e) {
@@ -107,24 +108,45 @@ final class RunCommand extends Command implements SignalableCommandInterface
      *
      * @return array{array<int, string>, array<string, string|true>}
      */
-    private function parseTaskArgs(array $args): array
+    private function parseTaskArgs(array $args, TaskMetadata $metadata): array
     {
         $arguments = [];
         $options = [];
         $argIndex = 0;
 
-        foreach ($args as $arg) {
+        // Build lookup maps from metadata
+        $valueOptions = [];
+        $shortcutMap = [];
+        foreach ($metadata->options as $option) {
+            if ($option->default !== false) {
+                $valueOptions[$option->name] = true;
+            }
+            if ($option->shortcut !== null) {
+                $shortcutMap[$option->shortcut] = $option->name;
+            }
+        }
+
+        for ($i = 0; $i < \count($args); ++$i) {
+            $arg = $args[$i];
+
             if (str_starts_with($arg, '--')) {
                 $option = substr($arg, 2);
                 if (str_contains($option, '=')) {
                     [$name, $value] = explode('=', $option, 2);
                     $options[$name] = $value;
+                } elseif (isset($valueOptions[$option]) && isset($args[$i + 1])) {
+                    $options[$option] = $args[++$i];
                 } else {
                     $options[$option] = true;
                 }
             } elseif (str_starts_with($arg, '-')) {
-                $option = substr($arg, 1);
-                $options[$option] = true;
+                $shortcut = substr($arg, 1);
+                $name = $shortcutMap[$shortcut] ?? $shortcut;
+                if (isset($valueOptions[$name]) && isset($args[$i + 1])) {
+                    $options[$name] = $args[++$i];
+                } else {
+                    $options[$name] = true;
+                }
             } else {
                 $arguments[$argIndex] = $arg;
                 ++$argIndex;
