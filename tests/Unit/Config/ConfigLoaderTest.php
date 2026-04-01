@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sputnik\Tests\Unit\Config;
 
 use Sputnik\Config\ConfigLoader;
+use Sputnik\Config\Exception\ConfigValidationException;
 use Sputnik\Tests\Support\TestCase;
 
 final class ConfigLoaderTest extends TestCase
@@ -163,7 +164,7 @@ final class ConfigLoaderTest extends TestCase
 
         $loader = new ConfigLoader($this->tempDir, validate: false);
 
-        $this->expectException(\Sputnik\Config\Exception\ConfigValidationException::class);
+        $this->expectException(ConfigValidationException::class);
         $loader->load();
     }
 }

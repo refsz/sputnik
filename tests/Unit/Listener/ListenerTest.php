@@ -10,7 +10,6 @@ use Sputnik\Event\ContextSwitchedEvent;
 use Sputnik\Listener\RegenerateTemplatesOnContextSwitch;
 use Sputnik\Listener\SwitchContextOnServices;
 use Sputnik\Template\TemplateEngine;
-use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
 use Sputnik\Variable\VariableResolver;
 
 final class ListenerTest extends TestCase

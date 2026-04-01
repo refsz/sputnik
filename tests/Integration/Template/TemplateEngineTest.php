@@ -193,7 +193,7 @@ final class TemplateEngineTest extends TestCase
         $engine = $this->createEngine([
             'test' => ['src' => 'src/test.template', 'dist' => 'dist/test.txt', 'overwrite' => 'ask'],
         ]);
-        $result = $engine->writeTemplate('test', confirmOverwrite: fn (string $path): bool => false);
+        $result = $engine->writeTemplate('test', confirmOverwrite: static fn (string $path): bool => false);
 
         $this->assertFalse($result['written']);
         $this->assertTrue($result['skipped']);
@@ -239,7 +239,7 @@ final class TemplateEngineTest extends TestCase
 
         $engine = $this->createEngine([
             'local-tpl' => ['src' => 'src/local.template', 'dist' => 'dist/local.txt', 'contexts' => ['local']],
-            'prod-tpl'  => ['src' => 'src/prod.template', 'dist' => 'dist/prod.txt', 'contexts' => ['prod']],
+            'prod-tpl' => ['src' => 'src/prod.template', 'dist' => 'dist/prod.txt', 'contexts' => ['prod']],
         ], context: 'local');
         $results = $engine->renderAll(force: true);
 
@@ -259,7 +259,7 @@ final class TemplateEngineTest extends TestCase
         $engine = $this->createEngine([
             'test' => ['src' => 'src/test.template', 'dist' => 'dist/test.txt', 'overwrite' => 'ask'],
         ]);
-        $engine->setConfirmOverwrite(fn (string $path): bool => false);
+        $engine->setConfirmOverwrite(static fn (string $path): bool => false);
         $result = $engine->writeTemplate('test');
 
         $this->assertFalse($result['written']);

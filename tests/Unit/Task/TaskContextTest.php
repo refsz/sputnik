@@ -33,22 +33,6 @@ final class TaskContextTest extends TestCase
         $this->sputnikOutput = $this->createMock(SputnikOutput::class);
     }
 
-    private function makeContext(bool $withOutput = true): TaskContext
-    {
-        return new TaskContext(
-            variables: $this->variables,
-            options: ['verbose' => true, 'env' => 'prod'],
-            arguments: ['target' => 'main', 'branch' => 'master'],
-            contextName: 'staging',
-            workingDir: '/var/app',
-            logger: $this->logger,
-            shellExecutor: $this->executor,
-            taskRunner: $this->taskRunner,
-            output: $withOutput ? $this->output : null,
-            sputnikOutput: $withOutput ? $this->sputnikOutput : null,
-        );
-    }
-
     // --- getWorkingDir ---
 
     public function testGetWorkingDirReturnsConstructorValue(): void
@@ -334,5 +318,21 @@ final class TaskContextTest extends TestCase
         $ctx = $this->makeContext(withOutput: false);
         $ctx->writeln('ignored');
         $this->addToAssertionCount(1);
+    }
+
+    private function makeContext(bool $withOutput = true): TaskContext
+    {
+        return new TaskContext(
+            variables: $this->variables,
+            options: ['verbose' => true, 'env' => 'prod'],
+            arguments: ['target' => 'main', 'branch' => 'master'],
+            contextName: 'staging',
+            workingDir: '/var/app',
+            logger: $this->logger,
+            shellExecutor: $this->executor,
+            taskRunner: $this->taskRunner,
+            output: $withOutput ? $this->output : null,
+            sputnikOutput: $withOutput ? $this->sputnikOutput : null,
+        );
     }
 }

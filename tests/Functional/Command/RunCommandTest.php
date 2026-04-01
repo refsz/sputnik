@@ -11,6 +11,7 @@ use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskMetadata;
 use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunner;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class RunCommandTest extends TestCase
@@ -272,7 +273,7 @@ final class RunCommandTest extends TestCase
         $tester = new CommandTester($command);
         $tester->execute(
             ['task' => 'test:boom'],
-            ['verbosity' => \Symfony\Component\Console\Output\OutputInterface::VERBOSITY_VERBOSE],
+            ['verbosity' => OutputInterface::VERBOSITY_VERBOSE],
         );
 
         $this->assertSame(1, $tester->getStatusCode());

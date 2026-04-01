@@ -115,7 +115,7 @@ final class Configuration
         }
 
         // Also check namespaces configuration
-        foreach ($this->getNamespaces() as $name => $config) {
+        foreach ($this->getNamespaces() as $config) {
             $dir = $config['dir'];
             $fullPath = $baseDir . '/' . $dir;
             if (is_dir($fullPath)) {

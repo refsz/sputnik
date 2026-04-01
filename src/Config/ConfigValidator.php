@@ -25,8 +25,8 @@ final class ConfigValidator
 
         try {
             $processor->process($this->getSchema(), $config);
-        } catch (ValidationException $e) {
-            throw ConfigValidationException::withErrors(array_values($e->getMessages()));
+        } catch (ValidationException $validationException) {
+            throw ConfigValidationException::withErrors(array_values($validationException->getMessages()));
         }
 
         $this->validateCrossReferences($config);
@@ -68,7 +68,7 @@ final class ConfigValidator
             'environment' => Expect::structure([
                 'detection' => Expect::string()->nullable(),
                 'executor' => Expect::string()->nullable()->assert(
-                    static fn(?string $v): bool => $v === null || str_contains($v, '{command}'),
+                    static fn (?string $v): bool => $v === null || str_contains($v, '{command}'),
                     "'environment.executor' must contain the {command} placeholder",
                 ),
             ])->castTo('array'),

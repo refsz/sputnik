@@ -32,9 +32,11 @@ final class ShellCallCounter
             if ($next === null) {
                 continue;
             }
+
             if (!\is_array($tokens[$next])) {
                 continue;
             }
+
             if ($tokens[$next][0] !== \T_STRING) {
                 continue;
             }

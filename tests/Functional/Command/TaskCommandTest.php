@@ -13,6 +13,7 @@ use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunner;
 use Sputnik\TaskCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 
 final class TaskCommandTest extends TestCase
@@ -174,7 +175,7 @@ final class TaskCommandTest extends TestCase
 
         $command = new TaskCommand($metadata, $runner);
         $tester = new CommandTester($command);
-        $tester->execute([], ['verbosity' => \Symfony\Component\Console\Output\OutputInterface::VERBOSITY_VERBOSE]);
+        $tester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE]);
 
         $this->assertSame(Command::FAILURE, $tester->getStatusCode());
         // Trace string includes #0, #1, etc.

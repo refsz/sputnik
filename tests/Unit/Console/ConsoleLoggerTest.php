@@ -12,14 +12,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 final class ConsoleLoggerTest extends TestCase
 {
-    private function makeLogger(int $verbosity = OutputInterface::VERBOSITY_VERY_VERBOSE): array
-    {
-        $output = new BufferedOutput($verbosity);
-        $logger = new ConsoleLogger($output);
-
-        return [$logger, $output];
-    }
-
     public function testErrorIsAlwaysShown(): void
     {
         [$logger, $output] = $this->makeLogger(OutputInterface::VERBOSITY_QUIET);
@@ -169,5 +161,13 @@ final class ConsoleLoggerTest extends TestCase
         $logger->log('custom_level', 'custom message');
 
         $this->assertStringContainsString('custom message', $output->fetch());
+    }
+
+    private function makeLogger(int $verbosity = OutputInterface::VERBOSITY_VERY_VERBOSE): array
+    {
+        $output = new BufferedOutput($verbosity);
+        $logger = new ConsoleLogger($output);
+
+        return [$logger, $output];
     }
 }

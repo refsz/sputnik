@@ -25,14 +25,6 @@ final class PhpFileParserTest extends TestCase
         rmdir($this->tempDir);
     }
 
-    private function writeFile(string $name, string $content): string
-    {
-        $path = $this->tempDir . '/' . $name;
-        file_put_contents($path, $content);
-
-        return $path;
-    }
-
     public function testExtractsSimpleClassName(): void
     {
         $path = $this->writeFile('Simple.php', '<?php class MyClass {}');
@@ -117,5 +109,13 @@ final class PhpFileParserTest extends TestCase
         $path = $this->writeFile('GlobalClass.php', '<?php class GlobalHelper {}');
 
         $this->assertSame('GlobalHelper', PhpFileParser::extractClassName($path));
+    }
+
+    private function writeFile(string $name, string $content): string
+    {
+        $path = $this->tempDir . '/' . $name;
+        file_put_contents($path, $content);
+
+        return $path;
     }
 }

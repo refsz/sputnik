@@ -22,7 +22,7 @@ final class OptionCoercer
                 $value = $this->coerce($option->name, $value, $option->type);
             }
 
-            if ($value !== null && !($option->choices === []) && !\in_array($value, $option->choices, true)) {
+            if ($value !== null && $option->choices !== [] && !\in_array($value, $option->choices, true)) {
                 throw new InvalidOptionException(\sprintf(
                     "Option '--%s' must be one of: %s. Got: '%s'",
                     $option->name,

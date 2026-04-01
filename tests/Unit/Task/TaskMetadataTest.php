@@ -10,14 +10,6 @@ use Sputnik\Task\TaskMetadata;
 
 final class TaskMetadataTest extends TestCase
 {
-    private function makeMetadata(string $name, array $aliases = []): TaskMetadata
-    {
-        return new TaskMetadata(
-            className: 'App\Task\FakeTask',
-            attribute: new Task(name: $name, description: 'A test task', aliases: $aliases),
-        );
-    }
-
     public function testMatchesReturnsTrueForExactName(): void
     {
         $metadata = $this->makeMetadata('db:migrate');
@@ -56,5 +48,13 @@ final class TaskMetadataTest extends TestCase
 
         $this->assertFalse($metadata->matches('Deploy:app'));
         $this->assertTrue($metadata->matches('Deploy:App'));
+    }
+
+    private function makeMetadata(string $name, array $aliases = []): TaskMetadata
+    {
+        return new TaskMetadata(
+            className: 'App\Task\FakeTask',
+            attribute: new Task(name: $name, description: 'A test task', aliases: $aliases),
+        );
     }
 }

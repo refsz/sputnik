@@ -9,9 +9,12 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use Sputnik\Attribute\Option;
 use Sputnik\Attribute\Task;
+use Sputnik\Console\SputnikOutput;
+use Sputnik\Environment\EnvironmentDetector;
 use Sputnik\Event\AfterTaskEvent;
 use Sputnik\Event\BeforeTaskEvent;
 use Sputnik\Event\TaskFailedEvent;
+use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskInterface;
@@ -21,8 +24,6 @@ use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateConfig;
 use Sputnik\Template\TemplateEngine;
-use Sputnik\Console\SputnikOutput;
-use Sputnik\Environment\EnvironmentDetector;
 use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -371,12 +372,13 @@ final class TaskRunnerTest extends TestCase
         $this->eventDispatcher->method('dispatch')
             ->willReturnCallback(static function ($event) use (&$dispatched) {
                 $dispatched[] = $event::class;
+
                 return $event;
             });
 
         $this->createRunner()->run('test:task');
 
-        $this->assertContains(\Sputnik\Event\TemplateRenderedEvent::class, $dispatched);
+        $this->assertContains(TemplateRenderedEvent::class, $dispatched);
     }
 
     public function testTemplatesRenderedOnlyOnce(): void

@@ -195,6 +195,14 @@ final class TaskDiscovery
             ));
         }
 
+        if (isset($this->aliasMap[$taskAttribute->name])) {
+            throw new TaskDiscoveryException(\sprintf(
+                "Task name '%s' collides with alias defined by task '%s'",
+                $taskAttribute->name,
+                $this->aliasMap[$taskAttribute->name],
+            ));
+        }
+
         $this->tasks[$taskAttribute->name] = $metadata;
 
         // Register aliases
