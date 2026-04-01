@@ -65,11 +65,28 @@ final class ConfigLoaderTest extends TestCase
         $this->assertFalse($loader->hasConfig());
     }
 
-    public function testHasConfigReturnsTrueWhenPresent(): void
+    public function testHasConfigReturnsTrueWhenBasePresent(): void
     {
         file_put_contents($this->tempDir . '/.sputnik.dist.neon', '');
         $loader = new ConfigLoader($this->tempDir);
         $this->assertTrue($loader->hasConfig());
+    }
+
+    public function testHasConfigReturnsTrueWhenOnlyLocalPresent(): void
+    {
+        file_put_contents($this->tempDir . '/.sputnik.neon', "variables:\n    constants:\n        foo: bar\n");
+        $loader = new ConfigLoader($this->tempDir);
+        $this->assertTrue($loader->hasConfig());
+    }
+
+    public function testLoadsOnlyLocalConfig(): void
+    {
+        file_put_contents($this->tempDir . '/.sputnik.neon', "variables:\n    constants:\n        foo: local\n");
+
+        $loader = new ConfigLoader($this->tempDir, validate: false);
+        $config = $loader->load();
+
+        $this->assertSame('local', $config->get('variables.constants.foo'));
     }
 
     public function testMissingLocalConfigIsIgnored(): void
