@@ -4,12 +4,17 @@
     "type": "project",
     "license": "MIT",
     "keywords": ["task-runner", "cli", "automation", "build", "devops"],
+    "homepage": "https://github.com/refsz/sputnik",
     "authors": [
         {
             "name": "Marcel Reuss",
             "email": "marcel@refs.media"
         }
     ],
+    "support": {
+        "issues": "https://github.com/refsz/sputnik/issues",
+        "source": "https://github.com/refsz/sputnik"
+    },
     "require": {
         "php": "^8.2",
         "nette/di": "^3.2",
