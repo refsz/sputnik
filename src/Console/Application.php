@@ -14,7 +14,7 @@ final class Application extends BaseApplication
 {
     public const NAME = 'Sputnik';
 
-    public const VERSION = '0.1.0';
+    public const VERSION = '@package_version@';
 
     private string $configFile = '';
 

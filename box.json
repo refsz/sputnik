@@ -26,6 +26,9 @@
             "in": "vendor/symfony/console/Resources"
         }
     ],
+    "replacements": {
+        "@package_version@": "git-version"
+    },
     "main": "bin/sputnik",
     "output": "build/sputnik.phar",
     "shebang": "#!/usr/bin/env php"
