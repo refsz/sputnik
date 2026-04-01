@@ -26,7 +26,7 @@ Simple key-value pairs. Can be overridden per context.
 
 ## Dynamic Variables
 
-Computed at runtime when first accessed (lazy, cached).
+Computed at runtime when variables are first accessed. All dynamic variables are resolved at once and cached.
 
 ### type: command
 
