@@ -26,7 +26,7 @@ final class ConfigValidator
         try {
             $processor->process($this->getSchema(), $config);
         } catch (ValidationException $validationException) {
-            throw ConfigValidationException::withErrors(array_values($validationException->getMessages()));
+            throw ConfigValidationException::withErrors($validationException->getMessages());
         }
 
         $this->validateCrossReferences($config);

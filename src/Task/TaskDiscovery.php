@@ -23,6 +23,16 @@ final class TaskDiscovery
 
     private bool $discovered = false;
 
+    private const RESERVED_NAMES = [
+        'init',
+        'run',
+        'list',
+        'help',
+        'completion',
+        'context:switch',
+        'context:list',
+    ];
+
     /**
      * @param array<string>      $directories Directories to scan for tasks
      * @param list<class-string> $classes     Explicit task classes to register
@@ -186,6 +196,13 @@ final class TaskDiscovery
             arguments: $arguments,
         );
 
+        if (\in_array($taskAttribute->name, self::RESERVED_NAMES, true)) {
+            throw new TaskDiscoveryException(\sprintf(
+                "Task name '%s' is reserved by a built-in command",
+                $taskAttribute->name,
+            ));
+        }
+
         if (isset($this->tasks[$taskAttribute->name])) {
             throw new TaskDiscoveryException(\sprintf(
                 "Duplicate task name '%s': defined in both '%s' and '%s'",
@@ -207,6 +224,14 @@ final class TaskDiscovery
 
         // Register aliases
         foreach ($taskAttribute->aliases as $alias) {
+            if (\in_array($alias, self::RESERVED_NAMES, true)) {
+                throw new TaskDiscoveryException(\sprintf(
+                    "Alias '%s' on task '%s' is reserved by a built-in command",
+                    $alias,
+                    $taskAttribute->name,
+                ));
+            }
+
             if (isset($this->tasks[$alias])) {
                 throw new TaskDiscoveryException(\sprintf(
                     "Alias '%s' on task '%s' collides with existing task name '%s'",
