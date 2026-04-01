@@ -1,0 +1,9 @@
+/vendor/
+/.idea/
+/.cache/
+/.phpunit.cache/
+/.sputnik/
+/coverage/
+/build/
+*.phar
+auth.json

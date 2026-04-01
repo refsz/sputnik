@@ -1,0 +1,71 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Find autoloader
+if (\Phar::running() !== '') {
+    // Running as PHAR
+    require 'phar://sputnik.phar/vendor/autoload.php';
+} else {
+    // Running from source
+    $autoloadPaths = [
+        __DIR__ . '/../vendor/autoload.php',           // Local development
+        __DIR__ . '/../../../autoload.php',            // Installed as dependency
+    ];
+
+    $autoloadPath = null;
+    foreach ($autoloadPaths as $path) {
+        if (file_exists($path)) {
+            $autoloadPath = $path;
+            break;
+        }
+    }
+
+    if ($autoloadPath === null) {
+        fwrite(STDERR, "Could not find autoloader. Run 'composer install' first.\n");
+        exit(1);
+    }
+
+    require $autoloadPath;
+}
+
+use Sputnik\Kernel;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
+// Determine working directory
+$workingDir = getcwd();
+
+// Check for --working-dir option
+$args = $_SERVER['argv'];
+foreach ($args as $i => $arg) {
+    if (str_starts_with($arg, '--working-dir=')) {
+        $workingDir = substr($arg, 14);
+        unset($args[$i]);
+        $_SERVER['argv'] = array_values($args);
+        break;
+    }
+    if ($arg === '--working-dir' && isset($args[$i + 1])) {
+        $workingDir = $args[$i + 1];
+        unset($args[$i], $args[$i + 1]);
+        $_SERVER['argv'] = array_values($args);
+        break;
+    }
+}
+
+// Create output for streaming
+$output = new ConsoleOutput();
+
+// Bootstrap and run
+try {
+    $kernel = new Kernel(workingDir: $workingDir);
+    $app = $kernel->createApplication($output);
+    $exitCode = $app->run(null, $output);
+    exit($exitCode);
+} catch (Throwable $e) {
+    $output->writeln('<error> Fatal error: ' . $e->getMessage() . ' </error>');
+    if (in_array('-v', $_SERVER['argv'], true) || in_array('--verbose', $_SERVER['argv'], true)) {
+        $output->writeln($e->getTraceAsString());
+    }
+    exit(1);
+}

@@ -1,0 +1,21 @@
+parameters:
+  level: 8
+  tmpDir: %currentWorkingDirectory%/.cache/phpstan
+  reportUnmatchedIgnoredErrors: true
+  checkBenevolentUnionTypes: true
+  checkUninitializedProperties: true
+  checkMissingCallableSignature: true
+  checkTooWideReturnTypesInProtectedAndPublicMethods: true
+  reportAnyTypeWideningInVarTag: true
+  paths:
+    - %currentWorkingDirectory%/src
+  excludePaths:
+    analyse:
+      - %currentWorkingDirectory%/vendor
+    analyseAndScan:
+      - %currentWorkingDirectory%/.cache
+
+includes:
+  - %currentWorkingDirectory%/vendor/phpstan/phpstan-deprecation-rules/rules.neon
+  - %currentWorkingDirectory%/vendor/phpstan/phpstan-strict-rules/rules.neon
+  - %currentWorkingDirectory%/vendor/phpstan/phpstan/conf/bleedingEdge.neon
