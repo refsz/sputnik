@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Sputnik;
+namespace Sputnik\Console\Command;
 
-use Sputnik\Console\Application;
 use Sputnik\Console\RuntimeVariableParser;
-use Sputnik\Console\SputnikOutput;
+use Sputnik\Console\TaskExecutionTrait;
 use Sputnik\Task\TaskMetadata;
 use Sputnik\Task\TaskRunner;
 use Symfony\Component\Console\Command\Command;
@@ -25,6 +24,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 final class TaskCommand extends Command implements SignalableCommandInterface
 {
+    use TaskExecutionTrait;
+
     public function __construct(
         private readonly TaskMetadata $metadata,
         private readonly TaskRunner $taskRunner,
@@ -32,22 +33,8 @@ final class TaskCommand extends Command implements SignalableCommandInterface
         parent::__construct($metadata->getName());
     }
 
-    /**
-     * @return list<int>
-     */
-    public function getSubscribedSignals(): array
-    {
-        return [\SIGINT, \SIGTERM];
-    }
-
-    public function handleSignal(int $signal, int|false $previousExitCode = 0): int
-    {
-        return Command::FAILURE;
-    }
-
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
-        // Suggest choices for options that define them
         foreach ($this->metadata->options as $option) {
             if ($option->choices !== [] && $input->mustSuggestOptionValuesFor($option->name)) {
                 $suggestions->suggestValues(array_values(array_map(strval(...), $option->choices)));
@@ -63,7 +50,6 @@ final class TaskCommand extends Command implements SignalableCommandInterface
             ->setDescription($this->metadata->getDescription())
             ->setAliases($this->metadata->getAliases());
 
-        // Add arguments from metadata
         foreach ($this->metadata->arguments as $argument) {
             $mode = $argument->required
                 ? InputArgument::REQUIRED
@@ -81,7 +67,6 @@ final class TaskCommand extends Command implements SignalableCommandInterface
             );
         }
 
-        // Add options from metadata
         foreach ($this->metadata->options as $option) {
             $mode = $option->default === false
                 ? InputOption::VALUE_NONE
@@ -96,7 +81,6 @@ final class TaskCommand extends Command implements SignalableCommandInterface
             );
         }
 
-        // Add global -D option for runtime variables
         $this->addOption(
             'define',
             'D',
@@ -139,59 +123,8 @@ final class TaskCommand extends Command implements SignalableCommandInterface
         }
     }
 
-    private function createSputnikOutput(OutputInterface $output): SputnikOutput
+    private function getTaskRunner(): TaskRunner
     {
-        $app = $this->getApplication();
-        $configFile = $app instanceof Application ? $app->getConfigFile() : '';
-        $version = $app instanceof \Symfony\Component\Console\Application ? $app->getVersion() : '0.0.0';
-
-        return new SputnikOutput(
-            $output,
-            $version,
-            $configFile,
-            $this->taskRunner->getContextName(),
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $arguments
-     * @param array<string, mixed> $options
-     * @param array<string, mixed> $runtimeVariables
-     */
-    private function executeTask(
-        TaskMetadata $metadata,
-        array $arguments,
-        array $options,
-        OutputInterface $output,
-        array $runtimeVariables,
-    ): int {
-        $sputnikOutput = $this->createSputnikOutput($output);
-        $sputnikOutput->header();
-        $sputnikOutput->taskStart($metadata->getName(), $metadata->getDescription());
-
-        $result = $this->taskRunner->run(
-            $metadata->getName(),
-            $arguments,
-            $options,
-            $output,
-            $runtimeVariables,
-            $sputnikOutput,
-        );
-
-        if ($result->isSuccessful()) {
-            $sputnikOutput->success($result->duration, $result->message);
-
-            return Command::SUCCESS;
-        }
-
-        if ($result->isSkipped()) {
-            $sputnikOutput->skipped($result->message ?? 'No reason given');
-
-            return Command::SUCCESS;
-        }
-
-        $sputnikOutput->failure($result->message ?? 'Unknown error');
-
-        return $result->exitCode ?? Command::FAILURE;
+        return $this->taskRunner;
     }
 }

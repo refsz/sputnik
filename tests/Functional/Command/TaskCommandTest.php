@@ -11,7 +11,7 @@ use Sputnik\Attribute\Task;
 use Sputnik\Task\TaskMetadata;
 use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunner;
-use Sputnik\TaskCommand;
+use Sputnik\Console\Command\TaskCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;

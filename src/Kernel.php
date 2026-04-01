@@ -13,6 +13,7 @@ use Sputnik\Console\Command\ContextListCommand;
 use Sputnik\Console\Command\ContextSwitchCommand;
 use Sputnik\Console\Command\InitCommand;
 use Sputnik\Console\Command\RunCommand;
+use Sputnik\Console\Command\TaskCommand;
 use Sputnik\Context\ContextManager;
 use Sputnik\DependencyInjection\ContainerFactory;
 use Sputnik\Environment\EnvironmentDetector;

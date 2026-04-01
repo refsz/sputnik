@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Sputnik\Console\Command;
 
-use Sputnik\Console\Application;
 use Sputnik\Console\RuntimeVariableParser;
-use Sputnik\Console\SputnikOutput;
+use Sputnik\Console\TaskExecutionTrait;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskMetadata;
 use Sputnik\Task\TaskNotFoundException;
@@ -28,24 +27,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 final class RunCommand extends Command implements SignalableCommandInterface
 {
+    use TaskExecutionTrait;
+
     public function __construct(
         private readonly TaskDiscovery $discovery,
         private readonly TaskRunner $taskRunner,
     ) {
         parent::__construct();
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function getSubscribedSignals(): array
-    {
-        return [\SIGINT, \SIGTERM];
-    }
-
-    public function handleSignal(int $signal, int|false $previousExitCode = 0): int
-    {
-        return Command::FAILURE;
     }
 
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
@@ -114,65 +102,7 @@ final class RunCommand extends Command implements SignalableCommandInterface
         }
     }
 
-    private function createSputnikOutput(OutputInterface $output): SputnikOutput
-    {
-        $app = $this->getApplication();
-        $configFile = $app instanceof Application ? $app->getConfigFile() : '';
-        $version = $app instanceof \Symfony\Component\Console\Application ? $app->getVersion() : '0.0.0';
-
-        return new SputnikOutput(
-            $output,
-            $version,
-            $configFile,
-            $this->taskRunner->getContextName(),
-        );
-    }
-
     /**
-     * @param array<int|string, mixed> $arguments
-     * @param array<string, mixed>     $options
-     * @param array<string, mixed>     $runtimeVariables
-     */
-    private function executeTask(
-        TaskMetadata $metadata,
-        array $arguments,
-        array $options,
-        OutputInterface $output,
-        array $runtimeVariables,
-    ): int {
-        $sputnikOutput = $this->createSputnikOutput($output);
-        $sputnikOutput->header();
-        $sputnikOutput->taskStart($metadata->getName(), $metadata->getDescription());
-
-        $result = $this->taskRunner->run(
-            $metadata->getName(),
-            $arguments,
-            $options,
-            $output,
-            $runtimeVariables,
-            $sputnikOutput,
-        );
-
-        if ($result->isSuccessful()) {
-            $sputnikOutput->success($result->duration, $result->message);
-
-            return Command::SUCCESS;
-        }
-
-        if ($result->isSkipped()) {
-            $sputnikOutput->skipped($result->message ?? 'No reason given');
-
-            return Command::SUCCESS;
-        }
-
-        $sputnikOutput->failure($result->message ?? 'Unknown error');
-
-        return $result->exitCode ?? Command::FAILURE;
-    }
-
-    /**
-     * Parse task arguments into separate arguments and options arrays.
-     *
      * @param array<string> $args
      *
      * @return array{array<int, string>, array<string, string|true>}
@@ -185,7 +115,6 @@ final class RunCommand extends Command implements SignalableCommandInterface
 
         foreach ($args as $arg) {
             if (str_starts_with($arg, '--')) {
-                // Long option
                 $option = substr($arg, 2);
                 if (str_contains($option, '=')) {
                     [$name, $value] = explode('=', $option, 2);
@@ -194,11 +123,9 @@ final class RunCommand extends Command implements SignalableCommandInterface
                     $options[$option] = true;
                 }
             } elseif (str_starts_with($arg, '-')) {
-                // Short option
                 $option = substr($arg, 1);
                 $options[$option] = true;
             } else {
-                // Positional argument
                 $arguments[$argIndex] = $arg;
                 ++$argIndex;
             }
@@ -226,5 +153,10 @@ final class RunCommand extends Command implements SignalableCommandInterface
                 $io->text('  - ' . $suggestion);
             }
         }
+    }
+
+    private function getTaskRunner(): TaskRunner
+    {
+        return $this->taskRunner;
     }
 }
