@@ -35,7 +35,7 @@ final class InitCommandTest extends TestCase
 
         $this->assertSame(0, $tester->getStatusCode());
         $this->assertFileExists($this->tempDir . '/.sputnik.dist.neon');
-        $this->assertFileExists($this->tempDir . '/tasks/ExampleTask.php');
+        $this->assertFileExists($this->tempDir . '/sputnik/ExampleTask.php');
     }
 
     public function testInitSkipsExistingFiles(): void
@@ -63,14 +63,14 @@ final class InitCommandTest extends TestCase
     {
         // Create tasks dir and existing task file
         mkdir($this->tempDir . '/tasks', 0755, true);
-        file_put_contents($this->tempDir . '/tasks/ExampleTask.php', '<?php // existing');
+        file_put_contents($this->tempDir . '/sputnik/ExampleTask.php', '<?php // existing');
 
         $tester = new CommandTester(new InitCommand());
         $tester->execute([]);
 
         $this->assertSame(0, $tester->getStatusCode());
         // Existing task should not be overwritten
-        $this->assertSame('<?php // existing', file_get_contents($this->tempDir . '/tasks/ExampleTask.php'));
+        $this->assertSame('<?php // existing', file_get_contents($this->tempDir . '/sputnik/ExampleTask.php'));
         $this->assertStringContainsString('Skipped', $tester->getDisplay());
     }
 

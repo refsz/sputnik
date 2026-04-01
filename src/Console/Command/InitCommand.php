@@ -20,7 +20,7 @@ final class InitCommand extends Command
 {
     private const CONFIG_FILE = '.sputnik.dist.neon';
 
-    private const TASKS_DIR = 'tasks';
+    private const TASKS_DIR = 'sputnik';
 
     protected function configure(): void
     {
@@ -32,8 +32,8 @@ final class InitCommand extends Command
                   <info>%command.full_name%</info>
 
                 This creates:
-                  - sputnik.neon configuration file
-                  - tasks/ directory with an example task
+                  - .sputnik.dist.neon configuration file
+                  - sputnik/ directory with an example task
 
                 Use --force to overwrite existing files:
 
@@ -109,9 +109,8 @@ final class InitCommand extends Command
         $io->newLine();
         $io->text('Next steps:');
         $io->listing([
-            'Edit <info>sputnik.neon</info> to configure your project',
-            'Create tasks in <info>tasks/</info> directory',
-            'Run <info>sputnik list-tasks</info> to see available tasks',
+            'Edit <info>.sputnik.dist.neon</info> to configure your project',
+            'Create tasks in <info>sputnik/</info> directory',
             'Run <info>sputnik example</info> to test the example task',
         ]);
 
@@ -125,7 +124,7 @@ final class InitCommand extends Command
 
 tasks:
     directories:
-        - tasks
+        - sputnik
 
 contexts:
     local:
@@ -162,8 +161,6 @@ NEON;
 <?php
 
 declare(strict_types=1);
-
-namespace App\Tasks;
 
 use Sputnik\Attribute\Task;
 use Sputnik\Attribute\Option;

@@ -53,7 +53,7 @@ final class Application extends BaseApplication
         // Show our header instead of Symfony's "AppName version" for list
         if ($isList) {
             $output->writeln(\sprintf(
-                "\xF0\x9F\x9B\xB0  <fg=green;options=bold>Sputnik v%s</> <fg=gray>│</> %s <fg=gray>│</> %s",
+                "\xF0\x9F\x9B\xB0  <fg=green;options=bold>Sputnik %s</> <fg=gray>│</> %s <fg=gray>│</> %s",
                 self::VERSION,
                 $this->configFile !== '' ? $this->configFile : 'no config',
                 'PHP ' . \PHP_MAJOR_VERSION . '.' . \PHP_MINOR_VERSION,
