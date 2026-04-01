@@ -111,12 +111,12 @@ final class TaskRunner implements TaskRunnerInterface
             $this->eventDispatcher->dispatch(new AfterTaskEvent($metadata, $result, $duration));
 
             return $result->withDuration($duration);
-        } catch (SputnikException $sputnikException) {
+        } catch (\Throwable $throwable) {
             $duration = microtime(true) - $startTime;
-            $logger->error('Task failed: ' . $sputnikException->getMessage());
-            $this->eventDispatcher->dispatch(new TaskFailedEvent($metadata, $sputnikException));
+            $logger->error('Task failed: ' . $throwable->getMessage());
+            $this->eventDispatcher->dispatch(new TaskFailedEvent($metadata, $throwable));
 
-            return TaskResult::failure($sputnikException->getMessage())->withDuration($duration);
+            return TaskResult::failure($throwable->getMessage())->withDuration($duration);
         }
     }
 
@@ -170,6 +170,7 @@ final class TaskRunner implements TaskRunnerInterface
             taskRunner: $this,
             output: $output,
             sputnikOutput: $sputnikOutput,
+            runtimeVariables: $runtimeVariables,
         );
     }
 
