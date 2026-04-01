@@ -81,6 +81,7 @@ final class SputnikExtension extends CompilerExtension
             ->setFactory(VariableResolver::class, [
                 'config' => $this->prefix('@config'),
                 'contextName' => $params['contextName'],
+                'workingDir' => $params['workingDir'],
             ])
             ->setAutowired(true);
 

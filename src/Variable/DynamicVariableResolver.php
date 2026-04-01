@@ -8,6 +8,11 @@ use Symfony\Component\Process\Process;
 
 final class DynamicVariableResolver
 {
+    public function __construct(
+        private readonly ?string $workingDir = null,
+    ) {
+    }
+
     /**
      * Resolve a dynamic variable definition.
      *
@@ -95,7 +100,7 @@ final class DynamicVariableResolver
             'user' => get_current_user(),
             'os' => \PHP_OS_FAMILY,
             'phpVersion' => \PHP_VERSION,
-            'cwd' => getcwd(),
+            'cwd' => $this->workingDir ?? getcwd(),
             'timestamp' => time(),
             'date' => date('Y-m-d'),
             'datetime' => date('Y-m-d H:i:s'),
@@ -127,7 +132,7 @@ final class DynamicVariableResolver
      */
     private function runProcess(array $command): ?string
     {
-        $process = new Process($command);
+        $process = new Process($command, $this->workingDir);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -142,7 +147,7 @@ final class DynamicVariableResolver
      */
     private function runShellCommand(string $command): ?string
     {
-        $process = Process::fromShellCommandline($command);
+        $process = Process::fromShellCommandline($command, $this->workingDir);
         $process->run();
 
         if (!$process->isSuccessful()) {

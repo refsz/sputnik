@@ -25,8 +25,9 @@ final class VariableResolver implements VariableResolverInterface
     public function __construct(
         private readonly Configuration $config,
         private ?string $contextName = null,
+        ?string $workingDir = null,
     ) {
-        $this->dynamicResolver = new DynamicVariableResolver();
+        $this->dynamicResolver = new DynamicVariableResolver($workingDir);
     }
 
     /**
