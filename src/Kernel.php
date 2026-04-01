@@ -13,7 +13,6 @@ use Sputnik\Console\Command\ContextListCommand;
 use Sputnik\Console\Command\ContextSwitchCommand;
 use Sputnik\Console\Command\InitCommand;
 use Sputnik\Console\Command\RunCommand;
-use Sputnik\Console\Command\SelfUpdateCommand;
 use Sputnik\Context\ContextManager;
 use Sputnik\DependencyInjection\ContainerFactory;
 use Sputnik\Environment\EnvironmentDetector;
@@ -65,7 +64,6 @@ final class Kernel
         // Add core commands
         $app->addCommand(new InitCommand());
         $app->addCommand(new RunCommand($taskDiscovery, $taskRunner));
-        $app->addCommand(new SelfUpdateCommand());
         // Add context commands
         $app->addCommand(new ContextListCommand($contextManager));
 
