@@ -213,11 +213,17 @@ variables:
 
         gitCommit:
             type: git
-            property: commit_short
+            property: commitShort
 
-        dockerTag:
+        serverInfo:
             type: composite
-            template: "{appName}:{gitBranch}-{gitCommit}"
+            providers:
+                hostname:
+                    type: system
+                    property: hostname
+                user:
+                    type: command
+                    command: whoami
 
 templates:
     env:

@@ -179,7 +179,7 @@ Tasks are discovered by scanning directories listed in `tasks.directories` in th
 ```neon
 tasks:
     directories:
-        - tasks/
+        - sputnik/
 ```
 
 Files must:

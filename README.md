@@ -20,7 +20,7 @@ A modern PHP TaskRunner with class-based tasks, environment-aware execution, and
 php sputnik.phar init
 ```
 
-Creates `.sputnik.dist.neon` and a `tasks/` directory with an example task.
+Creates `.sputnik.dist.neon` and a `sputnik/` directory with an example task.
 
 ### 2. Create a Task
 
