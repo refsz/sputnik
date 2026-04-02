@@ -1,7 +1,7 @@
 {
     "name": "sputnik/sputnik",
     "description": "Modern PHP TaskRunner with class-based tasks, Nette DI, and template engine",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "keywords": ["task-runner", "cli", "automation", "build", "devops"],
     "homepage": "https://github.com/refsz/sputnik",
