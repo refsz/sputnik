@@ -8,6 +8,7 @@ use Nette\DI\Compiler;
 use Nette\DI\Container;
 use Nette\DI\ContainerLoader;
 use Sputnik\Config\Configuration;
+use Sputnik\Console\Application;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 
 final class ContainerFactory
@@ -34,7 +35,7 @@ final class ContainerFactory
 
         $containerClass = $loader->load(
             fn (Compiler $compiler) => $this->configureCompiler($compiler),
-            [$this->config->all(), $this->contextName, $this->workingDir, $this->getTaskFilesHash()],
+            [$this->config->all(), $this->contextName, $this->workingDir, $this->getTaskFilesHash(), Application::VERSION],
         );
 
         $container = new $containerClass();
