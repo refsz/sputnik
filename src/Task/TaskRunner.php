@@ -15,7 +15,6 @@ use Sputnik\Event\BeforeTaskEvent;
 use Sputnik\Event\TaskFailedEvent;
 use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\ShouldNotHappenException;
-use Sputnik\Exception\SputnikException;
 use Sputnik\Executor\EnvironmentAwareExecutor;
 use Sputnik\Executor\ShellExecutor;
 use Sputnik\Template\TemplateConfig;

@@ -11,6 +11,15 @@ use Sputnik\Support\PhpFileParser;
 
 final class TaskDiscovery
 {
+    private const RESERVED_NAMES = [
+        'init',
+        'run',
+        'list',
+        'help',
+        'completion',
+        'context:switch',
+        'context:list',
+    ];
     /**
      * @var array<string, TaskMetadata>
      */
@@ -22,16 +31,6 @@ final class TaskDiscovery
     private array $aliasMap = [];
 
     private bool $discovered = false;
-
-    private const RESERVED_NAMES = [
-        'init',
-        'run',
-        'list',
-        'help',
-        'completion',
-        'context:switch',
-        'context:list',
-    ];
 
     /**
      * @param array<string>      $directories Directories to scan for tasks
