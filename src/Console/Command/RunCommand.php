@@ -121,12 +121,14 @@ final class RunCommand extends Command implements SignalableCommandInterface
             if ($option->default !== false) {
                 $valueOptions[$option->name] = true;
             }
+
             if ($option->shortcut !== null) {
                 $shortcutMap[$option->shortcut] = $option->name;
             }
         }
+        $counter = \count($args);
 
-        for ($i = 0; $i < \count($args); ++$i) {
+        for ($i = 0; $i < $counter; ++$i) {
             $arg = $args[$i];
 
             if (str_starts_with($arg, '--')) {
@@ -142,11 +144,7 @@ final class RunCommand extends Command implements SignalableCommandInterface
             } elseif (str_starts_with($arg, '-')) {
                 $shortcut = substr($arg, 1);
                 $name = $shortcutMap[$shortcut] ?? $shortcut;
-                if (isset($valueOptions[$name]) && isset($args[$i + 1])) {
-                    $options[$name] = $args[++$i];
-                } else {
-                    $options[$name] = true;
-                }
+                $options[$name] = isset($valueOptions[$name]) && isset($args[$i + 1]) ? $args[++$i] : true;
             } else {
                 $arguments[$argIndex] = $arg;
                 ++$argIndex;

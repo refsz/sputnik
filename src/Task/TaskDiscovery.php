@@ -20,6 +20,7 @@ final class TaskDiscovery
         'context:switch',
         'context:list',
     ];
+
     /**
      * @var array<string, TaskMetadata>
      */
