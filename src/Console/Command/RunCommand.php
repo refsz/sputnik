@@ -126,6 +126,7 @@ final class RunCommand extends Command implements SignalableCommandInterface
                 $shortcutMap[$option->shortcut] = $option->name;
             }
         }
+
         $counter = \count($args);
 
         for ($i = 0; $i < $counter; ++$i) {
