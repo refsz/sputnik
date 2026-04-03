@@ -62,6 +62,9 @@ try {
     $app = $kernel->createApplication($output);
     $exitCode = $app->run(null, $output);
     exit($exitCode);
+} catch (Sputnik\Exception\SputnikException $e) {
+    $output->writeln('<error> Error: ' . $e->getMessage() . ' </error>');
+    exit(1);
 } catch (Throwable $e) {
     $output->writeln('<error> Fatal error: ' . $e->getMessage() . ' </error>');
     if (in_array('-v', $_SERVER['argv'], true) || in_array('--verbose', $_SERVER['argv'], true)) {
