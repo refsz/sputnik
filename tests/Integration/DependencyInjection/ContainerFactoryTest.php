@@ -7,6 +7,7 @@ namespace Sputnik\Tests\Integration\DependencyInjection;
 use Nette\DI\Container;
 use Psr\Log\LoggerInterface;
 use Sputnik\Config\Configuration;
+use Sputnik\Console\Application;
 use Sputnik\Context\ContextManager;
 use Sputnik\DependencyInjection\ContainerFactory;
 use Sputnik\Event\ListenerDiscovery;
@@ -180,6 +181,64 @@ final class ContainerFactoryTest extends TestCase
         $factory->create();
 
         $this->assertDirectoryExists($this->tempDir . '/.sputnik/cache');
+    }
+
+    public function testCacheInvalidatesWhenConfigChanges(): void
+    {
+        $config1 = new Configuration(['variables' => ['constants' => ['foo' => 'bar']]]);
+        $factory1 = new ContainerFactory($config1, $this->tempDir, 'default');
+        $container1 = $factory1->create();
+
+        $config2 = new Configuration(['variables' => ['constants' => ['foo' => 'baz']]]);
+        $factory2 = new ContainerFactory($config2, $this->tempDir, 'default');
+        $container2 = $factory2->create();
+
+        $this->assertNotSame($container1::class, $container2::class);
+    }
+
+    public function testCacheInvalidatesWhenContextChanges(): void
+    {
+        $config = new Configuration([]);
+        $factory1 = new ContainerFactory($config, $this->tempDir, 'dev');
+        $container1 = $factory1->create();
+
+        $factory2 = new ContainerFactory($config, $this->tempDir, 'prod');
+        $container2 = $factory2->create();
+
+        $this->assertNotSame($container1::class, $container2::class);
+    }
+
+    public function testCacheInvalidatesWhenTaskFilesChange(): void
+    {
+        $taskDir = $this->tempDir . '/sputnik';
+        mkdir($taskDir, 0755, true);
+        file_put_contents($taskDir . '/FooTask.php', <<<'PHP'
+            <?php
+            declare(strict_types=1);
+            use Sputnik\Attribute\Task;
+            use Sputnik\Task\TaskContext;
+            use Sputnik\Task\TaskInterface;
+            use Sputnik\Task\TaskResult;
+            #[Task(name: 'foo', description: 'Foo')]
+            final class FooTask implements TaskInterface {
+                public function __invoke(TaskContext $ctx): TaskResult {
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+
+        $config = new Configuration(['tasks' => ['directories' => ['sputnik']]]);
+        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $container1 = $factory->create();
+
+        // Touch the task file to change its mtime
+        sleep(1);
+        touch($taskDir . '/FooTask.php');
+
+        $factory2 = new ContainerFactory($config, $this->tempDir, 'default');
+        $container2 = $factory2->create();
+
+        $this->assertNotSame($container1::class, $container2::class);
     }
 
     public function testDebugModeAffectsContainer(): void
