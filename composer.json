@@ -1,5 +1,5 @@
 {
-    "name": "sputnik/sputnik",
+    "name": "refs/sputnik",
     "description": "Modern PHP TaskRunner with class-based tasks, Nette DI, and template engine",
     "type": "library",
     "license": "MIT",

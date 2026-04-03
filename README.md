@@ -36,7 +36,7 @@ sha256sum -c sputnik.phar.sha256
 ### Composer
 
 ```bash
-composer require --dev sputnik/sputnik
+composer require --dev refs/sputnik
 ```
 
 ## Quick Start
