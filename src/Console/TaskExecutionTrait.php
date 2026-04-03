@@ -11,8 +11,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 trait TaskExecutionTrait
 {
-    abstract private function getTaskRunner(): TaskRunner;
-
     /**
      * @return list<int>
      */
@@ -26,10 +24,12 @@ trait TaskExecutionTrait
         return Command::FAILURE;
     }
 
+    abstract private function getTaskRunner(): TaskRunner;
+
     /**
      * @param array<int|string, mixed> $arguments
-     * @param array<string, mixed> $options
-     * @param array<string, mixed> $runtimeVariables
+     * @param array<string, mixed>     $options
+     * @param array<string, mixed>     $runtimeVariables
      */
     private function executeTask(
         TaskMetadata $metadata,

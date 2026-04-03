@@ -1,15 +1,20 @@
 {
-    "name": "sputnik/sputnik",
+    "name": "refs/sputnik",
     "description": "Modern PHP TaskRunner with class-based tasks, Nette DI, and template engine",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "keywords": ["task-runner", "cli", "automation", "build", "devops"],
+    "homepage": "https://github.com/refsz/sputnik",
     "authors": [
         {
             "name": "Marcel Reuss",
             "email": "marcel@refs.media"
         }
     ],
+    "support": {
+        "issues": "https://github.com/refsz/sputnik/issues",
+        "source": "https://github.com/refsz/sputnik"
+    },
     "require": {
         "php": "^8.2",
         "nette/di": "^3.2",

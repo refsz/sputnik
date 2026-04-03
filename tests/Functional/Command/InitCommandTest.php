@@ -61,8 +61,8 @@ final class InitCommandTest extends TestCase
 
     public function testInitSkipsExistingExampleTask(): void
     {
-        // Create tasks dir and existing task file
-        mkdir($this->tempDir . '/tasks', 0755, true);
+        // Create sputnik dir and existing task file
+        mkdir($this->tempDir . '/sputnik', 0755, true);
         file_put_contents($this->tempDir . '/sputnik/ExampleTask.php', '<?php // existing');
 
         $tester = new CommandTester(new InitCommand());

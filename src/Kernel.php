@@ -134,9 +134,17 @@ final class Kernel
         $base = '.sputnik.dist.neon';
         $local = '.sputnik.neon';
 
-        $display = $base;
-        if (file_exists($this->workingDir . '/' . $local)) {
-            $display .= ' + ' . $local;
+        $hasBase = file_exists($this->workingDir . '/' . $base);
+        $hasLocal = file_exists($this->workingDir . '/' . $local);
+
+        if (!$hasBase && !$hasLocal) {
+            return 'no config';
+        }
+
+        $display = $hasBase ? $base : '';
+
+        if ($hasLocal) {
+            $display .= ($display !== '' ? ' + ' : '') . $local;
         }
 
         return $display;

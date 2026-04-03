@@ -1,16 +1,43 @@
 # Sputnik
 
+[![CI](https://github.com/refsz/sputnik/actions/workflows/ci.yml/badge.svg)](https://github.com/refsz/sputnik/actions/workflows/ci.yml)
+[![Latest Release](https://img.shields.io/github/v/release/refsz/sputnik)](https://github.com/refsz/sputnik/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.2-8892BF.svg)](composer.json)
+
 A modern PHP TaskRunner with class-based tasks, environment-aware execution, and a powerful template engine.
 
-## Features
+## Why Sputnik?
 
-- **Class-based tasks** with PHP 8 attributes (`#[Task]`, `#[Option]`, `#[Argument]`)
-- **Environment-aware execution** — transparent command routing between host and container
-- **Context system** — switch between dev/prod/staging with variable overrides
-- **Template engine** — `{{ variable }}` syntax with defaults, required markers, and escape support
-- **Event system** — hook into task lifecycle with `#[AsListener]`
-- **Dynamic variables** — git info, shell commands, system properties, composite values
-- **PHAR distribution** — single-file deployment
+- **Class-per-task** -- each task is a focused, testable unit with PHP 8 attributes
+- **Context-aware** -- switch between dev/staging/prod with variable overrides, not code changes
+- **Template engine** -- simple `{{ variable }}` syntax, no magic functions
+- **Environment-aware** -- transparent command routing between host and container
+- **PHAR-first** -- single-file distribution, zero dependencies at runtime
+
+## Installation
+
+### PHAR (recommended)
+
+Download the latest release:
+
+```bash
+curl -Lo sputnik.phar https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar
+chmod +x sputnik.phar
+```
+
+Verify the checksum:
+
+```bash
+curl -Lo sputnik.phar.sha256 https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar.sha256
+sha256sum -c sputnik.phar.sha256
+```
+
+### Composer
+
+```bash
+composer require --dev refs/sputnik
+```
 
 ## Quick Start
 
@@ -55,28 +82,17 @@ final class GreetTask implements TaskInterface
 php sputnik.phar greet
 ```
 
-```
-🛰  Sputnik v0.1.0 │ .sputnik.dist.neon │ dev
-
-▸ greet · Say hello
-
-  > echo "Hello from Sputnik!"
-  Hello from Sputnik!
-
-✓ Done (0.01s)
-```
-
 ## Configuration
 
 Sputnik uses NEON format (similar to YAML). Two files:
 
-- `.sputnik.dist.neon` — committed to VCS, shared config
-- `.sputnik.neon` — local overrides, gitignored
+- `.sputnik.dist.neon` -- committed to VCS, shared config
+- `.sputnik.neon` -- local overrides, gitignored
 
 ```neon
 tasks:
     directories:
-        - dev-ops/tasks
+        - sputnik
 
 contexts:
     dev:
@@ -126,8 +142,15 @@ defaults:
 ## Requirements
 
 - PHP 8.2+
-- Composer (for development)
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## License
 
-MIT
+MIT -- see [LICENSE](LICENSE) for details.

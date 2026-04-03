@@ -12,7 +12,7 @@ jobs:
     name: Build PHAR & Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -31,10 +31,18 @@ jobs:
         run: box compile
 
       - name: Verify PHAR
-        run: php build/sputnik.phar --version
+        run: |
+          php build/sputnik.phar --version
+          php build/sputnik.phar list
+          php build/sputnik.phar init --help
+
+      - name: Generate checksum
+        run: sha256sum build/sputnik.phar > build/sputnik.phar.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/sputnik.phar
+          files: |
+            build/sputnik.phar
+            build/sputnik.phar.sha256
           generate_release_notes: true

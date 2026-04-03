@@ -61,7 +61,7 @@ final class ConfigLoader
      */
     public function hasConfig(): bool
     {
-        return file_exists($this->getBasePath());
+        return file_exists($this->getBasePath()) || file_exists($this->getLocalPath());
     }
 
     /**

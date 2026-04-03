@@ -16,6 +16,7 @@ final class TaskContext
     /**
      * @param array<string, mixed> $options
      * @param array<string, mixed> $arguments
+     * @param array<string, mixed> $runtimeVariables
      */
     public function __construct(
         private readonly VariableResolverInterface $variables,
@@ -28,6 +29,7 @@ final class TaskContext
         private readonly TaskRunnerInterface $taskRunner,
         private readonly ?OutputInterface $output = null,
         private readonly ?SputnikOutput $sputnikOutput = null,
+        private readonly array $runtimeVariables = [],
     ) {
     }
 
@@ -104,7 +106,7 @@ final class TaskContext
         $savedSteps = $this->sputnikOutput?->saveSteps();
         $this->sputnikOutput?->resetSteps();
 
-        $result = $this->taskRunner->run($taskName, $arguments, $options, $this->output, [], $this->sputnikOutput);
+        $result = $this->taskRunner->run($taskName, $arguments, $options, $this->output, $this->runtimeVariables, $this->sputnikOutput);
 
         if ($savedSteps !== null) {
             $this->sputnikOutput?->restoreSteps($savedSteps);
