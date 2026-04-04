@@ -120,7 +120,13 @@ Dispatched after a template is rendered.
 
 ## Discovery
 
-Listeners are discovered from the same directories as tasks. Place them anywhere in your task directories.
+Listeners are discovered from the same directories as tasks. A listener must:
+
+- Have the `#[AsListener]` attribute on the class
+- Implement `__invoke()` with the event as parameter
+- Be placed in a directory listed in `tasks.directories`
+
+The class name does not matter -- only the attribute determines discovery.
 
 ## Priority Order
 

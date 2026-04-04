@@ -9,7 +9,9 @@ Sputnik is configured using [NEON](https://ne-on.org/) files located in the proj
 | `.sputnik.dist.neon` | Base configuration, committed to VCS |
 | `.sputnik.neon` | Local overrides, add to `.gitignore` |
 
-Both files are automatically loaded and deep-merged. Values in `.sputnik.neon` override values from `.sputnik.dist.neon`.
+Both files are automatically loaded and deep-merged. Nested keys are merged recursively, scalar values are replaced. Either file can exist on its own.
+
+See [Project Structure](project-structure.md) for details on file locations and `.gitignore` recommendations.
 
 ---
 
@@ -24,7 +26,15 @@ tasks:
         - src/Tasks
 ```
 
-Each directory is scanned recursively for PHP classes that implement the task interface. Order determines scan priority.
+Each directory is scanned recursively for PHP classes with the `#[Task]` attribute. If a directory does not exist, it is silently skipped.
+
+You can also register task classes explicitly:
+
+```neon
+tasks:
+    classes:
+        - App\Tasks\DeployTask
+```
 
 ---
 
@@ -46,7 +56,7 @@ contexts:
                 appEnv: prod
 ```
 
-Each context can override `variables.constants`. The active context is selected at runtime and its constants are merged on top of the global constants. See [docs/contexts.md](contexts.md).
+Each context can override `variables.constants` (not `dynamics`). The active context is selected at runtime and its constants are deep-merged on top of the global constants. Context names are case-sensitive. See [Contexts](contexts.md).
 
 ---
 
@@ -149,7 +159,7 @@ environment:
 | Key | Required | Description |
 |---|---|---|
 | `detection` | no | Shell command whose exit code determines whether the current process is inside the target environment. Exit code `0` means inside. Default checks for `/.dockerenv` and `/run/.containerenv`. |
-| `executor` | yes (if used) | Command template used to run tasks inside the environment. `{command}` is replaced with the actual command string. |
+| `executor` | required for container tasks | Command template used to run tasks inside the environment. `{command}` is replaced with the actual command string. Must be present if any task uses `environment: 'container'`. |
 
 See [docs/environments.md](environments.md).
 

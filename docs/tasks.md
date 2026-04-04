@@ -39,9 +39,28 @@ final class MigrateTask implements TaskInterface
 | `aliases` | | Alternative names, e.g. `['migrate']` allows `sputnik migrate` |
 | `group` | | Grouping label in task list, e.g. `'database'`, `'docker'` |
 | `hidden` | | `true` to hide from list (still executable) |
-| `environment` | | `'container'`, `'host'`, or `null` (default). See [docs/environments.md](environments.md) |
+| `environment` | | `'container'`, `'host'`, or `null` (default). See [Environments](environments.md) |
+
+Task names must not collide with built-in commands. See [CLI Reference](cli.md#reserved-names) for the full list.
 
 ## Options and Arguments
+
+**Arguments** are positional values -- order matters, no `--` prefix needed:
+
+```bash
+sputnik deploy production       # "production" is an argument
+```
+
+Use arguments when the value is required and its meaning is obvious from context.
+
+**Options** are named flags with `--` prefix:
+
+```bash
+sputnik deploy --env=production --force
+sputnik deploy --env production -f
+```
+
+Use options when the value is optional, has a default, or needs a name to be understandable.
 
 Use `#[Option]` and `#[Argument]` attributes on class properties.
 
@@ -75,12 +94,12 @@ final class DeployTask implements TaskInterface
 
 | Parameter | Description |
 |---|---|
-| `name` | Required |
+| `name` | Required. Must not be a reserved name (`context`, `define`, `working-dir`, `D`) |
 | `description` | |
-| `shortcut` | Single letter for `-f` style |
+| `shortcut` | Single letter for `-f` style. Must not be `D` (reserved) |
 | `default` | Default value |
 | `required` | Boolean |
-| `type` | `'string'`, `'int'`, `'float'`, `'bool'`, `'array'` — auto-coercion applied |
+| `type` | `'string'`, `'int'`, `'float'`, `'bool'`, `'array'` -- auto-coercion applied |
 | `choices` | Restrict to specific values |
 
 ### Argument Parameters
@@ -105,8 +124,10 @@ $ctx->get('varName', 'default'); // with fallback default
 ### Options and Arguments
 
 ```php
-$ctx->option('name');   // get option value
-$ctx->argument('name'); // get argument value
+$ctx->option('name');       // get single option value
+$ctx->argument('name');     // get single argument value
+$ctx->getOptions();         // get all options as array
+$ctx->getArguments();       // get all arguments as array
 ```
 
 ### Shell Execution
@@ -122,14 +143,28 @@ Both methods accept an options array:
 $ctx->shellRaw('make build', ['env' => ['APP_ENV' => 'prod'], 'tty' => true, 'timeout' => 60]);
 ```
 
-- TTY commands automatically get no timeout.
-- Returns `ExecutionResult` with: `exitCode`, `output`, `errorOutput`, `duration`, `isSuccessful()`, `assertSuccess()`.
+- `env` -- additional environment variables for the process
+- `tty` -- allocate a TTY (disables timeout automatically)
+- `timeout` -- seconds before the process is killed (default: no timeout)
+
+Returns `ExecutionResult` with:
+
+| Method / Property | Description |
+|---|---|
+| `exitCode` | Process exit code |
+| `output` | Stdout content |
+| `errorOutput` | Stderr content |
+| `duration` | Execution time in seconds |
+| `isSuccessful()` | True if exit code is 0 |
+| `assertSuccess()` | Throws if exit code is not 0 |
 
 ### Sub-tasks
 
 ```php
-$ctx->runTask('other:task', $arguments, $options);
+$result = $ctx->runTask('other:task', $arguments, $options);
 ```
+
+Runtime variables set with `-D` on the original command propagate to sub-tasks automatically.
 
 ### Output
 
@@ -142,10 +177,13 @@ $ctx->success('message'); // green text
 ### Logging
 
 ```php
-$ctx->info('message');
-$ctx->warning('message');
-$ctx->error('message');
+$ctx->info('message');                  // shown with -v
+$ctx->warning('message');               // shown with -v
+$ctx->error('message');                 // shown with -v
+$ctx->log('debug', 'message', $ctx);   // generic PSR-3 log
 ```
+
+Log output is only visible when running with `-v` (verbose mode).
 
 ### Context Info
 
@@ -164,6 +202,8 @@ return TaskResult::failure('What went wrong');
 return TaskResult::skipped('Why it was skipped');
 ```
 
+Task results affect the CLI exit code: `success` and `skipped` return exit code 0, `failure` returns exit code 1 (or a custom code via the second parameter).
+
 ## Runtime Variables
 
 Users can override variables at runtime with `-D`:
@@ -172,9 +212,11 @@ Users can override variables at runtime with `-D`:
 sputnik deploy -D DB_HOST=remote -D DEBUG=true
 ```
 
+This works on both direct task commands and via the `run` command. Values are automatically coerced: `true`/`false` to bool, numeric strings to int/float, JSON arrays to array.
+
 ## Task Discovery
 
-Tasks are discovered by scanning directories listed in `tasks.directories` in the project config.
+Tasks are discovered by recursively scanning directories listed in `tasks.directories` in the project config.
 
 ```neon
 tasks:
@@ -188,4 +230,4 @@ Files must:
 - Contain a class with the `#[Task]` attribute
 - Implement `TaskInterface`
 
-Namespaced classes are supported — Sputnik has a built-in classmap autoloader.
+Namespaced classes are supported -- Sputnik has a built-in classmap autoloader. If a configured directory does not exist, it is silently skipped.

@@ -26,7 +26,7 @@ Simple key-value pairs. Can be overridden per context.
 
 ## Dynamic Variables
 
-Computed at runtime when variables are first accessed. All dynamic variables are resolved at once and cached.
+Computed at runtime when variables are first accessed. All dynamic variables are resolved at once and cached. If a dynamic variable fails to resolve (e.g. a command returns non-zero, or a git property is unavailable), it returns `null`.
 
 ### type: command
 

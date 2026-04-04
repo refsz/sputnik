@@ -69,6 +69,16 @@ contexts:
                 appEnv: prod  # overrides when prod is active
 ```
 
+## One-Shot Override
+
+Use `--context` to override the context for a single command without persisting:
+
+```bash
+sputnik --context prod deploy
+```
+
+After the command finishes, templates are re-rendered with the previously persisted context.
+
 ## State Persistence
 
 Active context is stored in `.sputnik/state.json`. This file is auto-created and should be gitignored (it's inside `.sputnik/` directory).

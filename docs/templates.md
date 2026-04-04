@@ -39,10 +39,12 @@ DEBUG={{ debug | "false" }}
 LOG_LEVEL={{ logLevel | 'info' }}
 ```
 
-**Required variable (no default, fails if missing):**
+**Required variable (fails if missing or empty):**
 ```
 API_KEY={{! apiKey }}
 ```
+
+If a required variable is not defined, template rendering will fail with an error.
 
 **Escape literal braces:**
 ```

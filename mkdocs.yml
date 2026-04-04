@@ -30,6 +30,7 @@ nav:
   - Getting Started:
       - Installation: installation.md
       - Quick Start: quickstart.md
+      - Project Structure: project-structure.md
   - Guide:
       - Writing Tasks: tasks.md
       - Configuration: configuration.md
@@ -38,6 +39,8 @@ nav:
       - Contexts: contexts.md
       - Event Listeners: listeners.md
       - Environments: environments.md
+  - Reference:
+      - CLI Reference: cli.md
 
 markdown_extensions:
   - pymdownx.highlight:
