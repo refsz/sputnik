@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sputnik\Environment;
 
+use Sputnik\Exception\RuntimeException;
 use Symfony\Component\Process\Process;
 
 final class EnvironmentDetector
@@ -29,6 +30,14 @@ final class EnvironmentDetector
 
     public function wrapCommand(string $command, ?string $environment): string
     {
+        if ($environment === 'host' && $this->isContainer) {
+            throw new RuntimeException('Host task cannot be executed inside a container');
+        }
+
+        if ($environment === 'container' && !$this->isContainer && $this->executor === null) {
+            throw new RuntimeException('Container task requires an environment.executor in the configuration');
+        }
+
         if ($environment !== 'container' || $this->isContainer || $this->executor === null) {
             return $command;
         }

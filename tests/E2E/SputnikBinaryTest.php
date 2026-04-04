@@ -535,6 +535,28 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('from-host', $result->getOutput());
     }
 
+    public function testContainerTaskWithoutExecutorFails(): void
+    {
+        $this->scaffoldProject([
+            'noexec' => <<<'PHP'
+                #[Task(name: 'container:fail', description: 'No executor', environment: 'container')]
+                final class NoexecTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->shellRaw('echo "should not run"');
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['container:fail'], $this->tempDir);
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $this->assertStringContainsString('executor', $result->getOutput());
+    }
+
     // ── Helpers ─────────────────────────────────────────────────
 
     /**

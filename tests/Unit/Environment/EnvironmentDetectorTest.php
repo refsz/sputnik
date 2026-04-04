@@ -6,6 +6,7 @@ namespace Sputnik\Tests\Unit\Environment;
 
 use PHPUnit\Framework\TestCase;
 use Sputnik\Environment\EnvironmentDetector;
+use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 
 final class EnvironmentDetectorTest extends TestCase
 {
@@ -71,12 +72,25 @@ final class EnvironmentDetectorTest extends TestCase
         $this->assertSame('echo hello', $result);
     }
 
-    public function testWrapCommandWithoutExecutorReturnsUnchanged(): void
+    public function testContainerTaskWithoutExecutorThrows(): void
     {
         $detector = new EnvironmentDetector(detection: 'false');
 
-        $result = $detector->wrapCommand('composer install', 'container');
-        $this->assertSame('composer install', $result);
+        $this->expectException(SputnikRuntimeException::class);
+        $this->expectExceptionMessageMatches('/executor/');
+        $detector->wrapCommand('composer install', 'container');
+    }
+
+    public function testHostTaskInsideContainerThrows(): void
+    {
+        $detector = new EnvironmentDetector(
+            detection: 'true',
+            executor: 'docker compose exec -T app {command}',
+        );
+
+        $this->expectException(SputnikRuntimeException::class);
+        $this->expectExceptionMessageMatches('/Host task/');
+        $detector->wrapCommand('docker compose up', 'host');
     }
 
     public function testGetExecutor(): void
