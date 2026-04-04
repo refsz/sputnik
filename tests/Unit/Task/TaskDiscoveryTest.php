@@ -147,4 +147,22 @@ final class TaskDiscoveryTest extends TestCase
         $this->expectExceptionMessageMatches('/real:name/');
         $discovery->discoverAll();
     }
+
+    public function testReservedOptionNameThrows(): void
+    {
+        $discovery = new TaskDiscovery([$this->fixture('ReservedOptionName')]);
+
+        $this->expectException(TaskDiscoveryException::class);
+        $this->expectExceptionMessageMatches('/context.*reserved/');
+        $discovery->discoverAll();
+    }
+
+    public function testReservedOptionShortcutThrows(): void
+    {
+        $discovery = new TaskDiscovery([$this->fixture('ReservedOptionShortcut')]);
+
+        $this->expectException(TaskDiscoveryException::class);
+        $this->expectExceptionMessageMatches('/D.*reserved/');
+        $discovery->discoverAll();
+    }
 }

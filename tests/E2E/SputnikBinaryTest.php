@@ -271,6 +271,21 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('staging', $taskResult->getOutput());
     }
 
+    public function testContextOverrideDoesNotPersist(): void
+    {
+        $this->sputnik(['init'], $this->tempDir);
+
+        // Run with --context override
+        $result = $this->sputnik(['--context', 'production', 'example', '-v'], $this->tempDir);
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('production', $result->getOutput());
+
+        // Next run without --context should be back to default (local)
+        $result = $this->sputnik(['example', '-v'], $this->tempDir);
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('local', $result->getOutput());
+    }
+
     // ── Error handling ──────────────────────────────────────────
 
     public function testInvalidConfigShowsCleanError(): void

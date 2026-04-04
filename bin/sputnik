@@ -53,14 +53,42 @@ foreach ($args as $i => $arg) {
     }
 }
 
+// Check for --context option
+$contextOverride = null;
+$args = $_SERVER['argv'];
+foreach ($args as $i => $arg) {
+    if (str_starts_with($arg, '--context=')) {
+        $contextOverride = substr($arg, 10);
+        unset($args[$i]);
+        $_SERVER['argv'] = array_values($args);
+        break;
+    }
+    if ($arg === '--context' && isset($args[$i + 1])) {
+        $contextOverride = $args[$i + 1];
+        unset($args[$i], $args[$i + 1]);
+        $_SERVER['argv'] = array_values($args);
+        break;
+    }
+}
+
 // Create output for streaming
 $output = new ConsoleOutput();
 
 // Bootstrap and run
 try {
-    $kernel = new Kernel(workingDir: $workingDir);
+    $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride);
     $app = $kernel->createApplication($output);
     $exitCode = $app->run(null, $output);
+
+    // Re-render templates with the persisted context if --context was a one-shot override
+    if ($contextOverride !== null) {
+        $persistedContext = $kernel->getContextManager()->getCurrentContext();
+        if ($persistedContext !== $contextOverride) {
+            $kernel->getTemplateEngine()->switchContext($persistedContext);
+            $kernel->getTemplateEngine()->renderAll(force: true);
+        }
+    }
+
     exit($exitCode);
 } catch (Sputnik\Exception\SputnikException $e) {
     $output->writeln('<error> Error: ' . $e->getMessage() . ' </error>');

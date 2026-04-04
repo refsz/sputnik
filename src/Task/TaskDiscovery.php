@@ -21,6 +21,13 @@ final class TaskDiscovery
         'context:list',
     ];
 
+    private const RESERVED_OPTIONS = [
+        'context',
+        'define',
+        'working-dir',
+        'D',
+    ];
+
     /**
      * @var array<string, TaskMetadata>
      */
@@ -268,7 +275,23 @@ final class TaskDiscovery
         foreach ($reflection->getProperties() as $property) {
             $attributes = $property->getAttributes(Option::class);
             foreach ($attributes as $attribute) {
-                $options[] = $attribute->newInstance();
+                $option = $attribute->newInstance();
+
+                if (\in_array($option->name, self::RESERVED_OPTIONS, true)) {
+                    throw new TaskDiscoveryException(\sprintf(
+                        "Option name '%s' is reserved by a built-in option",
+                        $option->name,
+                    ));
+                }
+
+                if ($option->shortcut !== null && \in_array($option->shortcut, self::RESERVED_OPTIONS, true)) {
+                    throw new TaskDiscoveryException(\sprintf(
+                        "Option shortcut '%s' is reserved by a built-in option",
+                        $option->shortcut,
+                    ));
+                }
+
+                $options[] = $option;
             }
         }
 
