@@ -1,5 +1,5 @@
 site_name: Sputnik
-site_description: Modern PHP TaskRunner with class-based tasks, environment-aware execution, and template engine
+site_description: A PHP TaskRunner for project automation
 site_url: https://refsz.github.io/sputnik
 repo_url: https://github.com/refsz/sputnik
 repo_name: refsz/sputnik
@@ -7,23 +7,28 @@ repo_name: refsz/sputnik
 theme:
   name: material
   palette:
-    - scheme: default
-      primary: deep purple
-      accent: amber
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - scheme: slate
-      primary: deep purple
-      accent: amber
+    - scheme: sputnik
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+    - scheme: sputnik-light
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    logo: material/rocket-launch
   features:
     - navigation.sections
     - navigation.expand
+    - navigation.top
+    - navigation.path
     - content.code.copy
+    - content.code.annotate
     - search.highlight
+    - search.suggest
 
 nav:
   - Home: index.md
@@ -43,12 +48,24 @@ nav:
   - Reference:
       - CLI Reference: cli.md
 
+extra_css:
+  - https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/refsz/sputnik
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
+  - pymdownx.details
   - admonition
+  - attr_list
+  - md_in_html
   - toc:
       permalink: true

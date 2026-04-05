@@ -1,0 +1,154 @@
+/* Sputnik Dark Theme - based on Space/Orbital design language */
+
+/* Dark scheme (default) */
+[data-md-color-scheme="sputnik"] {
+    --md-primary-fg-color: #00e5ff;
+    --md-primary-fg-color--light: #c3f5ff;
+    --md-primary-fg-color--dark: #006875;
+    --md-primary-bg-color: #00363d;
+    --md-accent-fg-color: #feb300;
+    --md-accent-fg-color--transparent: rgba(254, 179, 0, 0.1);
+    --md-accent-bg-color: #432c00;
+
+    --md-default-fg-color: #e2e2e8;
+    --md-default-fg-color--light: #bac9cc;
+    --md-default-fg-color--lighter: #849396;
+    --md-default-fg-color--lightest: #3b494c;
+    --md-default-bg-color: #111318;
+    --md-default-bg-color--light: #1a1c20;
+    --md-default-bg-color--lighter: #1e2024;
+    --md-default-bg-color--lightest: #282a2e;
+
+    --md-code-fg-color: #c3f5ff;
+    --md-code-bg-color: #0c0e12;
+    --md-code-hl-color: rgba(0, 229, 255, 0.1);
+    --md-code-hl-number-color: #feb300;
+    --md-code-hl-special-color: #00e5ff;
+    --md-code-hl-function-color: #c3f5ff;
+    --md-code-hl-constant-color: #a0ced9;
+    --md-code-hl-keyword-color: #00e5ff;
+    --md-code-hl-string-color: #ffd799;
+    --md-code-hl-name-color: #e2e2e8;
+    --md-code-hl-operator-color: #849396;
+    --md-code-hl-punctuation-color: #849396;
+    --md-code-hl-comment-color: #3b494c;
+    --md-code-hl-generic-color: #00e5ff;
+    --md-code-hl-variable-color: #c3f5ff;
+
+    --md-typeset-color: #e2e2e8;
+    --md-typeset-a-color: #00e5ff;
+
+    --md-footer-fg-color: #849396;
+    --md-footer-fg-color--light: #3b494c;
+    --md-footer-fg-color--lighter: #282a2e;
+    --md-footer-bg-color: #0c0e12;
+    --md-footer-bg-color--dark: #0c0e12;
+
+    --md-shadow-z1: 0 0 20px rgba(0, 229, 255, 0.04);
+    --md-shadow-z2: 0 0 40px rgba(0, 229, 255, 0.06);
+}
+
+/* Light scheme */
+[data-md-color-scheme="sputnik-light"] {
+    --md-primary-fg-color: #006875;
+    --md-primary-fg-color--light: #004f58;
+    --md-primary-fg-color--dark: #00363d;
+    --md-primary-bg-color: #c3f5ff;
+    --md-accent-fg-color: #604100;
+    --md-accent-bg-color: #ffdeac;
+
+    --md-default-fg-color: #1a1c20;
+    --md-default-fg-color--light: #333539;
+    --md-default-fg-color--lighter: #849396;
+    --md-default-fg-color--lightest: #bac9cc;
+    --md-default-bg-color: #f5f5f8;
+    --md-default-bg-color--light: #eaecef;
+    --md-default-bg-color--lighter: #e2e2e8;
+    --md-default-bg-color--lightest: #d8dade;
+
+    --md-code-fg-color: #004f58;
+    --md-code-bg-color: #eaecef;
+
+    --md-typeset-a-color: #006875;
+}
+
+/* Navigation styling */
+[data-md-color-scheme="sputnik"] .md-header {
+    background-color: rgba(12, 14, 18, 0.85);
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(59, 73, 76, 0.2);
+}
+
+[data-md-color-scheme="sputnik"] .md-tabs {
+    background-color: rgba(17, 19, 24, 0.9);
+    border-bottom: 1px solid rgba(59, 73, 76, 0.1);
+}
+
+/* Sidebar */
+[data-md-color-scheme="sputnik"] .md-sidebar {
+    background-color: #111318;
+}
+
+[data-md-color-scheme="sputnik"] .md-nav__link--active {
+    color: #00e5ff;
+    font-weight: 600;
+}
+
+/* Admonitions */
+[data-md-color-scheme="sputnik"] .md-typeset .admonition,
+[data-md-color-scheme="sputnik"] .md-typeset details {
+    background-color: #1a1c20;
+    border-color: rgba(59, 73, 76, 0.3);
+}
+
+/* Code blocks */
+[data-md-color-scheme="sputnik"] .md-typeset code {
+    background-color: #1a1c20;
+    border: 1px solid rgba(59, 73, 76, 0.2);
+}
+
+[data-md-color-scheme="sputnik"] .md-typeset pre > code {
+    border: none;
+}
+
+/* Tables */
+[data-md-color-scheme="sputnik"] .md-typeset table:not([class]) th {
+    background-color: #1a1c20;
+    color: #00e5ff;
+}
+
+[data-md-color-scheme="sputnik"] .md-typeset table:not([class]) tr:hover td {
+    background-color: rgba(0, 229, 255, 0.04);
+}
+
+/* Search */
+[data-md-color-scheme="sputnik"] .md-search__input {
+    background-color: #1e2024;
+}
+
+/* Headline font */
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4 {
+    font-family: "Space Grotesk", sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.md-typeset h1 {
+    color: #c3f5ff;
+}
+
+/* Subtle glow on primary links */
+[data-md-color-scheme="sputnik"] .md-typeset a:hover {
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+/* Copy button styling */
+[data-md-color-scheme="sputnik"] .md-clipboard {
+    color: #849396;
+}
+
+[data-md-color-scheme="sputnik"] .md-clipboard:hover {
+    color: #00e5ff;
+}
