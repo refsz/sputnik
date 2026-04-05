@@ -7,18 +7,9 @@ repo_name: refsz/sputnik
 theme:
   name: material
   palette:
-    - scheme: slate
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    - scheme: default
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+    scheme: slate
+    primary: custom
+    accent: custom
   font:
     text: Inter
     code: JetBrains Mono
