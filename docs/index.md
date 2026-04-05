@@ -1,6 +1,6 @@
 # Sputnik
 
-A modern PHP TaskRunner with class-based tasks, environment-aware execution, and a powerful template engine.
+A modern PHP TaskRunner with class-based tasks, environment-aware execution, and simple variable templating.
 
 ## Why Sputnik?
 
@@ -14,7 +14,17 @@ A modern PHP TaskRunner with class-based tasks, environment-aware execution, and
 
 - [Installation](installation.md)
 - [Quick Start](quickstart.md)
+- [Recipes](recipes.md)
 - [Configuration Reference](configuration.md)
 - [Writing Tasks](tasks.md)
+- [CLI Reference](cli.md)
+
+## Release Notes
+
+Changes and new features are documented in [GitHub Releases](https://github.com/refsz/sputnik/releases). Breaking changes are highlighted in release notes.
+
+## Links
+
 - [GitHub Repository](https://github.com/refsz/sputnik)
-- [Releases](https://github.com/refsz/sputnik/releases)
+- [Latest Release](https://github.com/refsz/sputnik/releases/latest)
+- [Report an Issue](https://github.com/refsz/sputnik/issues)

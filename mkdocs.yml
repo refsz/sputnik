@@ -39,6 +39,7 @@ nav:
       - Contexts: contexts.md
       - Event Listeners: listeners.md
       - Environments: environments.md
+  - Recipes: recipes.md
   - Reference:
       - CLI Reference: cli.md
 

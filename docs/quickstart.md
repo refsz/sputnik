@@ -18,12 +18,13 @@ php sputnik.phar example
 ```
 
 ```
-Sputnik 0.1.0 | .sputnik.dist.neon | local
+Sputnik 0.1.0 │ .sputnik.dist.neon │ local
 
-> example - An example task to get you started
+▸ example · An example task to get you started
 
 Hello, World!
-Done (0.00s)
+✓ Done (0.00s)
+  Greeted World
 ```
 
 ## Create your own task
@@ -67,3 +68,5 @@ php sputnik.phar greet
 - [Writing Tasks](tasks.md) -- options, arguments, shell execution, sub-tasks
 - [Variables](variables.md) -- dynamic variables, runtime overrides
 - [Templates](templates.md) -- file templating with variable substitution
+- [Recipes](recipes.md) -- practical examples for common use cases
+- [CLI Reference](cli.md) -- all commands and flags
