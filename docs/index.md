@@ -1,10 +1,20 @@
-# Sputnik
-
-A PHP TaskRunner for project automation. Class-based tasks, context switching, environment-aware execution.
-
+---
+hide:
+  - navigation
+  - toc
 ---
 
-Sputnik runs tasks defined as PHP classes. Each task is a single class with attributes -- no YAML actions, no function dumps, no DSL. You write normal PHP, Sputnik handles discovery, CLI, contexts, and shell routing.
+<div class="sputnik-hero" markdown>
+
+# Sputnik
+
+A PHP TaskRunner for project automation.
+Class-based tasks, context switching, environment-aware execution.
+
+[Get Started](quickstart.md){ .md-button .md-button--primary }
+[View on GitHub](https://github.com/refsz/sputnik){ .md-button }
+
+</div>
 
 ```php
 #[Task(name: 'deploy', description: 'Deploy the application', environment: 'container')]
@@ -20,27 +30,90 @@ final class DeployTask implements TaskInterface
 }
 ```
 
-## Get started
+```
+$ php sputnik.phar deploy
+
+Sputnik 0.1.0 │ .sputnik.dist.neon │ prod
+
+▸ deploy · Deploy the application
+
+  > rsync -avz ./dist/ /var/www/app/
+  > php artisan migrate --force
+✓ Done (1.24s)
+```
+
+---
 
 <div class="grid cards" markdown>
 
-- :material-download: **[Installation](installation.md)** -- PHAR download or Composer
-- :material-rocket-launch: **[Quick Start](quickstart.md)** -- init a project, run your first task
-- :material-book-open-variant: **[Recipes](recipes.md)** -- practical patterns for common use cases
-- :material-console: **[CLI Reference](cli.md)** -- all commands and flags
+-   :material-code-braces: **Tasks**
+
+    ---
+
+    PHP classes with `#[Task]` attributes. Options, arguments, shell execution built in.
+
+    [:octicons-arrow-right-24: Writing Tasks](tasks.md)
+
+-   :material-swap-horizontal: **Contexts**
+
+    ---
+
+    Named configurations with variable overrides. Switch with one command, no code changes.
+
+    [:octicons-arrow-right-24: Contexts](contexts.md)
+
+-   :material-file-replace-outline: **Templates**
+
+    ---
+
+    Render files with `{{ variable }}` syntax. Re-rendered automatically on context switch.
+
+    [:octicons-arrow-right-24: Templates](templates.md)
+
+-   :material-docker: **Environments**
+
+    ---
+
+    Transparent command routing between host and container via configurable executor.
+
+    [:octicons-arrow-right-24: Environments](environments.md)
 
 </div>
 
-## Key concepts
+---
 
-**[Tasks](tasks.md)** are PHP classes with `#[Task]` attributes. Options, arguments, and shell execution are built in.
+<div class="grid cards" markdown>
 
-**[Contexts](contexts.md)** let you define named configurations -- different variables, different behavior. Switch with one command, no code changes.
+-   :material-rocket-launch: **Quick Start**
 
-**[Templates](templates.md)** render files like `.env` with `{{ variable }}` syntax. Re-rendered automatically on context switch.
+    ---
 
-**[Environments](environments.md)** route commands transparently between host and container. A task marked `environment: 'container'` is automatically wrapped with your Docker executor.
+    Initialize a project and run your first task in under a minute.
 
-## Release Notes
+    [:octicons-arrow-right-24: Quick Start](quickstart.md)
 
-Changes are documented in [GitHub Releases](https://github.com/refsz/sputnik/releases).
+-   :material-book-open-variant: **Recipes**
+
+    ---
+
+    Practical patterns for builds, deploys, Docker, templates, and more.
+
+    [:octicons-arrow-right-24: Recipes](recipes.md)
+
+-   :material-console: **CLI Reference**
+
+    ---
+
+    All commands, flags, and reserved names.
+
+    [:octicons-arrow-right-24: CLI Reference](cli.md)
+
+-   :material-tag: **Releases**
+
+    ---
+
+    Release notes and PHAR downloads.
+
+    [:octicons-arrow-right-24: GitHub Releases](https://github.com/refsz/sputnik/releases)
+
+</div>

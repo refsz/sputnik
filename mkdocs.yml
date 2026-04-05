@@ -16,10 +16,14 @@ theme:
   icon:
     logo: material/rocket-launch
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
     - navigation.top
     - navigation.path
+    - navigation.footer
+    - toc.follow
     - content.code.copy
     - content.code.annotate
     - search.highlight
@@ -47,10 +51,15 @@ extra_css:
   - https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap
   - stylesheets/extra.css
 
+copyright: Copyright &copy; 2026 Marcel Reuss
+
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/refsz/sputnik
+    - icon: fontawesome/brands/packagist
+      link: https://packagist.org/packages/refs/sputnik
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -62,5 +71,8 @@ markdown_extensions:
   - admonition
   - attr_list
   - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - toc:
       permalink: true
