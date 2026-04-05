@@ -1,7 +1,7 @@
 /* Sputnik Dark Theme - based on Space/Orbital design language */
 
-/* Dark scheme (default) */
-[data-md-color-scheme="sputnik"] {
+/* Dark scheme overrides (slate) */
+[data-md-color-scheme="slate"] {
     --md-primary-fg-color: #00e5ff;
     --md-primary-fg-color--light: #c3f5ff;
     --md-primary-fg-color--dark: #006875;
@@ -48,107 +48,116 @@
     --md-shadow-z2: 0 0 40px rgba(0, 229, 255, 0.06);
 }
 
-/* Light scheme */
-[data-md-color-scheme="sputnik-light"] {
+/* Light scheme overrides */
+[data-md-color-scheme="default"] {
     --md-primary-fg-color: #006875;
     --md-primary-fg-color--light: #004f58;
     --md-primary-fg-color--dark: #00363d;
-    --md-primary-bg-color: #c3f5ff;
+    --md-primary-bg-color: #ffffff;
     --md-accent-fg-color: #604100;
     --md-accent-bg-color: #ffdeac;
-
-    --md-default-fg-color: #1a1c20;
-    --md-default-fg-color--light: #333539;
-    --md-default-fg-color--lighter: #849396;
-    --md-default-fg-color--lightest: #bac9cc;
-    --md-default-bg-color: #f5f5f8;
-    --md-default-bg-color--light: #eaecef;
-    --md-default-bg-color--lighter: #e2e2e8;
-    --md-default-bg-color--lightest: #d8dade;
-
-    --md-code-fg-color: #004f58;
-    --md-code-bg-color: #eaecef;
-
     --md-typeset-a-color: #006875;
 }
 
-/* Navigation styling */
-[data-md-color-scheme="sputnik"] .md-header {
-    background-color: rgba(12, 14, 18, 0.85);
+/* Header */
+[data-md-color-scheme="slate"] .md-header {
+    background-color: rgba(12, 14, 18, 0.9);
     backdrop-filter: blur(24px);
     border-bottom: 1px solid rgba(59, 73, 76, 0.2);
 }
 
-[data-md-color-scheme="sputnik"] .md-tabs {
-    background-color: rgba(17, 19, 24, 0.9);
+[data-md-color-scheme="slate"] .md-tabs {
+    background-color: rgba(12, 14, 18, 0.95);
     border-bottom: 1px solid rgba(59, 73, 76, 0.1);
 }
 
 /* Sidebar */
-[data-md-color-scheme="sputnik"] .md-sidebar {
-    background-color: #111318;
+[data-md-color-scheme="slate"] .md-sidebar__scrollwrap {
+    background-color: transparent;
 }
 
-[data-md-color-scheme="sputnik"] .md-nav__link--active {
+[data-md-color-scheme="slate"] .md-nav__link--active {
     color: #00e5ff;
     font-weight: 600;
 }
 
 /* Admonitions */
-[data-md-color-scheme="sputnik"] .md-typeset .admonition,
-[data-md-color-scheme="sputnik"] .md-typeset details {
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
     background-color: #1a1c20;
     border-color: rgba(59, 73, 76, 0.3);
 }
 
-/* Code blocks */
-[data-md-color-scheme="sputnik"] .md-typeset code {
+/* Inline code */
+[data-md-color-scheme="slate"] .md-typeset code {
     background-color: #1a1c20;
     border: 1px solid rgba(59, 73, 76, 0.2);
+    color: #c3f5ff;
 }
 
-[data-md-color-scheme="sputnik"] .md-typeset pre > code {
+[data-md-color-scheme="slate"] .md-typeset pre > code {
     border: none;
 }
 
 /* Tables */
-[data-md-color-scheme="sputnik"] .md-typeset table:not([class]) th {
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
     background-color: #1a1c20;
     color: #00e5ff;
 }
 
-[data-md-color-scheme="sputnik"] .md-typeset table:not([class]) tr:hover td {
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tr:hover td {
     background-color: rgba(0, 229, 255, 0.04);
 }
 
 /* Search */
-[data-md-color-scheme="sputnik"] .md-search__input {
+[data-md-color-scheme="slate"] .md-search__input {
     background-color: #1e2024;
 }
 
-/* Headline font */
+/* Headlines - Space Grotesk */
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3,
 .md-typeset h4 {
-    font-family: "Space Grotesk", sans-serif;
+    font-family: "Space Grotesk", var(--md-text-font-family), sans-serif;
     letter-spacing: -0.02em;
 }
 
-.md-typeset h1 {
+[data-md-color-scheme="slate"] .md-typeset h1 {
     color: #c3f5ff;
 }
 
-/* Subtle glow on primary links */
-[data-md-color-scheme="sputnik"] .md-typeset a:hover {
+[data-md-color-scheme="slate"] .md-typeset h2 {
+    color: #e2e2e8;
+    border-bottom: 1px solid rgba(59, 73, 76, 0.2);
+    padding-bottom: 0.3em;
+}
+
+/* Link hover glow */
+[data-md-color-scheme="slate"] .md-typeset a:hover {
     text-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
 }
 
-/* Copy button styling */
-[data-md-color-scheme="sputnik"] .md-clipboard {
+/* Copy button */
+[data-md-color-scheme="slate"] .md-clipboard {
     color: #849396;
 }
 
-[data-md-color-scheme="sputnik"] .md-clipboard:hover {
+[data-md-color-scheme="slate"] .md-clipboard:hover {
     color: #00e5ff;
+}
+
+/* Content area max width */
+.md-content {
+    max-width: 52rem;
+}
+
+/* Navigation section labels */
+[data-md-color-scheme="slate"] .md-nav__item--section > .md-nav__link {
+    color: #00e5ff;
+    font-family: "Space Grotesk", var(--md-text-font-family), sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-size: 0.65rem;
 }
