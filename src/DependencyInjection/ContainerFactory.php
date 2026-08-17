@@ -34,17 +34,15 @@ final class ContainerFactory
         $loader = new ContainerLoader($cacheDir, $this->debugMode);
 
         $containerClass = $loader->load(
-            fn (Compiler $compiler) => $this->configureCompiler($compiler),
+            function (Compiler $compiler): ?string {
+                $this->configureCompiler($compiler);
+
+                return null;
+            },
             [$this->config->all(), $this->contextName, $this->workingDir, $this->getTaskFilesHash(), Application::VERSION],
         );
 
-        $container = new $containerClass();
-
-        if (!$container instanceof Container) {
-            throw new SputnikRuntimeException(\sprintf('Expected %s instance, got %s', Container::class, get_debug_type($container)));
-        }
-
-        return $container;
+        return new $containerClass();
     }
 
     /**

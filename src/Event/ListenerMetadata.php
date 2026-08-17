@@ -6,6 +6,9 @@ namespace Sputnik\Event;
 
 final class ListenerMetadata
 {
+    /**
+     * @param class-string $className
+     */
     public function __construct(
         public readonly string $className,
         public readonly string $event,

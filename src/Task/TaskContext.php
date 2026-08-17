@@ -109,7 +109,7 @@ final class TaskContext
         $result = $this->taskRunner->run($taskName, $arguments, $options, $this->output, $this->runtimeVariables, $this->sputnikOutput);
 
         if ($savedSteps !== null) {
-            $this->sputnikOutput?->restoreSteps($savedSteps);
+            $this->sputnikOutput->restoreSteps($savedSteps);
         }
 
         return $result;
