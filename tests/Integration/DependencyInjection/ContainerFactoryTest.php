@@ -7,7 +7,6 @@ namespace Sputnik\Tests\Integration\DependencyInjection;
 use Nette\DI\Container;
 use Psr\Log\LoggerInterface;
 use Sputnik\Config\Configuration;
-use Sputnik\Console\Application;
 use Sputnik\Context\ContextManager;
 use Sputnik\DependencyInjection\ContainerFactory;
 use Sputnik\Event\ListenerDiscovery;
