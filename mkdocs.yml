@@ -11,13 +11,12 @@ theme:
     primary: custom
     accent: custom
   font:
-    text: Inter
+    text: Space Grotesk
     code: JetBrains Mono
   icon:
     logo: material/rocket-launch
   features:
     - navigation.tabs
-    - navigation.tabs.sticky
     - navigation.sections
     - navigation.expand
     - navigation.top
@@ -58,7 +57,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/refsz/sputnik
-    - icon: fontawesome/brands/packagist
+    - icon: fontawesome/brands/php
       link: https://packagist.org/packages/refs/sputnik
 
 markdown_extensions:

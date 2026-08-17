@@ -18,7 +18,7 @@ php sputnik.phar example
 ```
 
 ```
-Sputnik 0.1.0 │ .sputnik.dist.neon │ local
+🛰  Sputnik v0.1.x │ .sputnik.dist.neon │ local
 
 ▸ example · An example task to get you started
 
@@ -26,6 +26,8 @@ Hello, World!
 ✓ Done (0.00s)
   Greeted World
 ```
+
+The exact version string depends on the release you are running. The overall output format stays the same.
 
 ## Create your own task
 

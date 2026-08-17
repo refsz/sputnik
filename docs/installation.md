@@ -1,44 +1,48 @@
 # Installation
 
-## PHAR
+=== "PHAR (recommended)"
 
-Download the latest release as a self-contained PHAR file:
+    Download the latest release as a self-contained PHAR file:
 
-```bash
-curl -Lo sputnik.phar https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar
-chmod +x sputnik.phar
-```
+    ```bash
+    curl -Lo sputnik.phar https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar
+    chmod +x sputnik.phar
+    ```
 
-Verify the checksum:
+    Verify the checksum:
 
-```bash
-curl -Lo sputnik.phar.sha256 https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar.sha256
-sha256sum -c sputnik.phar.sha256
-```
+    ```bash
+    curl -Lo sputnik.phar.sha256 https://github.com/refsz/sputnik/releases/latest/download/sputnik.phar.sha256
+    sha256sum -c sputnik.phar.sha256
+    ```
 
-Place the PHAR in your project root. You can commit it to version control so every team member uses the same version, or add it to `.gitignore` and download it as part of your setup.
+    Run with:
 
-Run with:
+    ```bash
+    php sputnik.phar <command>
+    ```
 
-```bash
-php sputnik.phar <command>
-```
+=== "Composer (optional)"
 
-Use the PHAR when you want a zero-dependency setup. No Composer install needed in the project.
+    If you want IDE autocompletion when writing tasks:
 
-## Composer (optional)
+    ```bash
+    composer require --dev refs/sputnik
+    ```
 
-If you want IDE autocompletion when writing tasks, you can additionally install via Composer:
+    Run with:
 
-```bash
-composer require --dev refs/sputnik
-```
+    ```bash
+    vendor/bin/sputnik <command>
+    ```
 
-This is not required for running Sputnik -- it only provides class definitions for PHPStorm and similar IDEs. Execution should still happen through the PHAR.
+!!! tip
+    The PHAR is the recommended way to run Sputnik. Composer install is optional and primarily useful for IDE autocompletion. You can use both together -- Composer for class definitions, PHAR for execution.
 
 ## Requirements
 
-- PHP 8.2 or higher
+!!! note
+    PHP 8.2 or higher is required.
 
 ## Next
 

@@ -1,6 +1,9 @@
 # Configuration Reference
 
-Sputnik is configured using [NEON](https://ne-on.org/) files located in the project root.
+Sputnik is configured using [NEON](https://ne-on.org/) files located in the project root. NEON is similar to YAML but with cleaner syntax for PHP values.
+
+!!! info "NEON vs YAML"
+    NEON looks like YAML but has a few differences: strings don't need quotes unless ambiguous, `true`/`false`/`null` are native types, and multi-line strings use triple quotes (`'''`). If you know YAML, NEON will feel familiar.
 
 ## Config Files
 

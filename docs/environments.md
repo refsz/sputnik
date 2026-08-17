@@ -56,28 +56,30 @@ The `executor` is only required if you have tasks with `environment: 'container'
 
 ### Host task inside a container
 
-If a task declares `environment: 'host'` and Sputnik detects it is running inside a container, the task will fail with:
+!!! danger
+    If a task declares `environment: 'host'` and Sputnik detects it is running inside a container, the task will fail:
 
-```
-Error: Host task cannot be executed inside a container
-```
+    ```
+    Error: Host task cannot be executed inside a container
+    ```
 
-There is no mechanism to execute commands on the host from inside a container. If you need both host and container commands, split them into separate tasks.
+    There is no mechanism to execute commands on the host from inside a container. If you need both host and container commands, split them into separate tasks.
 
 ### Container task without executor
 
-If a task declares `environment: 'container'` but no `environment.executor` is configured, the task will fail with:
+!!! warning
+    If a task declares `environment: 'container'` but no `environment.executor` is configured, the task will fail:
 
-```
-Error: Container task requires an environment.executor in the configuration
-```
+    ```
+    Error: Container task requires an environment.executor in the configuration
+    ```
 
-Add the executor to your configuration:
+    Add the executor to your configuration:
 
-```neon
-environment:
-    executor: "docker compose exec -T app {command}"
-```
+    ```neon
+    environment:
+        executor: "docker compose exec -T app {command}"
+    ```
 
 ## Listener Environment
 

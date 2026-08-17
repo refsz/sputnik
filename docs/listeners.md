@@ -130,7 +130,10 @@ The class name does not matter -- only the attribute determines discovery.
 
 ## Priority Order
 
-Higher priority runs first. Use negative priorities to run after built-in listeners.
+Higher priority runs first.
+
+!!! tip
+    Use negative priorities to run after built-in listeners.
 
 | Priority | Listener |
 |----------|----------|

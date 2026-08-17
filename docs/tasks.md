@@ -41,7 +41,8 @@ final class MigrateTask implements TaskInterface
 | `hidden` | | `true` to hide from list (still executable) |
 | `environment` | | `'container'`, `'host'`, or `null` (default). See [Environments](environments.md) |
 
-Task names must not collide with built-in commands. See [CLI Reference](cli.md#reserved-names) for the full list.
+!!! warning
+    Task names must not collide with built-in commands. See [CLI Reference](cli.md#reserved-names) for the full list.
 
 ## Options and Arguments
 
@@ -132,15 +133,24 @@ $ctx->getArguments();       // get all arguments as array
 
 ### Shell Execution
 
+`shell()` interpolates variables and escapes them. `shellRaw()` runs the command as-is.
+
 ```php
-$ctx->shell('echo {{ VAR }}');       // variable interpolation + escapeshellarg
-$ctx->shellRaw('docker compose up'); // execute as-is
+$ctx->shell('echo {{ VAR }}');       // (1)!
+$ctx->shellRaw('docker compose up'); // (2)!
 ```
+
+1. Variables in `{{ }}` are resolved and wrapped with `escapeshellarg()` to prevent injection.
+2. Command is passed directly to the shell. Use when you need pipes, redirects, or exact control.
 
 Both methods accept an options array:
 
 ```php
-$ctx->shellRaw('make build', ['env' => ['APP_ENV' => 'prod'], 'tty' => true, 'timeout' => 60]);
+$ctx->shellRaw('make build', [
+    'env' => ['APP_ENV' => 'prod'],
+    'tty' => true,
+    'timeout' => 60,
+]);
 ```
 
 - `env` -- additional environment variables for the process
@@ -164,7 +174,8 @@ Returns `ExecutionResult` with:
 $result = $ctx->runTask('other:task', $arguments, $options);
 ```
 
-Runtime variables set with `-D` on the original command propagate to sub-tasks automatically.
+!!! tip
+    Runtime variables set with `-D` on the original command propagate to sub-tasks automatically. No need to pass them explicitly.
 
 ### Output
 
@@ -183,7 +194,8 @@ $ctx->error('message');                 // shown with -v
 $ctx->log('debug', 'message', $ctx);   // generic PSR-3 log
 ```
 
-Log output is only visible when running with `-v` (verbose mode).
+!!! info
+    Log output is only visible when running with `-v` (verbose mode).
 
 ### Context Info
 
@@ -212,11 +224,14 @@ Users can override variables at runtime with `-D`:
 sputnik deploy -D DB_HOST=remote -D DEBUG=true
 ```
 
-This works on both direct task commands and via the `run` command. Values are automatically coerced: `true`/`false` to bool, numeric strings to int/float, JSON arrays to array.
+This works on both direct task commands and via the `run` command.
+
+!!! tip
+    Values are automatically coerced: `true`/`false` to bool, numeric strings to int/float, JSON arrays to array.
 
 ## Task Discovery
 
-Tasks are discovered by recursively scanning directories listed in `tasks.directories` in the project config.
+Tasks are discovered by recursively scanning directories listed in `tasks.directories` in the [project config](configuration.md).
 
 ```neon
 tasks:

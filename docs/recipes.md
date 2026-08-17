@@ -1,8 +1,12 @@
 # Recipes
 
-Practical patterns for common Sputnik use cases. These are starting points -- adapt paths, commands, and variable names to your project.
+Practical patterns for common Sputnik use cases. These are starting points, not drop-in universal templates -- adapt paths, commands, framework-specific calls, and variable names to your project.
 
-## Simple build task
+!!! note
+    Examples on this page intentionally use familiar tools like Docker, Composer, npm, and Laravel-style commands. Treat them as patterns, not as Sputnik-specific conventions.
+
+## Simple build task { #build }
+*See: [Writing Tasks](tasks.md)*
 
 ```php
 #[Task(name: 'build', description: 'Build the project')]
@@ -22,7 +26,8 @@ final class BuildTask implements TaskInterface
 sputnik build
 ```
 
-## Container task with Docker
+## Container task with Docker { #container }
+*See: [Environments](environments.md)*
 
 Config:
 
@@ -52,7 +57,8 @@ sputnik db:migrate
 # In container: runs directly
 ```
 
-## Context-based .env generation
+## Context-based .env generation { #context-env }
+*See: [Contexts](contexts.md) and [Templates](templates.md)*
 
 Config:
 
@@ -99,7 +105,8 @@ sputnik context:switch prod
 # .env now contains APP_ENV=prod, DEBUG=false
 ```
 
-## Runtime variable overrides
+## Runtime variable overrides { #runtime }
+*See: [Variables](variables.md)*
 
 ```php
 #[Task(name: 'deploy', description: 'Deploy the application')]
@@ -121,7 +128,8 @@ final class DeployTask implements TaskInterface
 sputnik deploy -D deployTarget=production
 ```
 
-## Task with options and arguments
+## Task with options and arguments { #options }
+*See: [Writing Tasks](tasks.md#options-and-arguments)*
 
 ```php
 use Sputnik\Attribute\Argument;
@@ -160,7 +168,8 @@ sputnik db:seed users --count 50 --truncate
 sputnik db:seed users -c 50
 ```
 
-## Listener on context switch
+## Listener on context switch { #listener }
+*See: [Event Listeners](listeners.md)*
 
 ```php
 use Sputnik\Attribute\AsListener;
@@ -187,7 +196,8 @@ final class ClearCacheOnContextSwitch
 
 Runs automatically after every context switch, after templates have been re-rendered (priority -10 runs after the built-in listeners at 100 and 0).
 
-## One-shot context override
+## One-shot context override { #context-override }
+*See: [CLI Reference](cli.md#global-flags)*
 
 Run a single task in a different context without switching:
 
@@ -197,7 +207,8 @@ sputnik --context prod deploy
 
 The persisted context is not changed. Templates are rendered with the override context for this run, then restored afterwards.
 
-## Host-only task
+## Host-only task { #host }
+*See: [Environments](environments.md)*
 
 ```php
 #[Task(name: 'docker:start', description: 'Start containers', environment: 'host')]

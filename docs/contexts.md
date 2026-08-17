@@ -77,7 +77,8 @@ Use `--context` to override the context for a single command without persisting:
 sputnik --context prod deploy
 ```
 
-After the command finishes, templates are re-rendered with the previously persisted context.
+!!! info
+    The `--context` flag does not change the persisted context. After the command finishes, templates are re-rendered with the previously active context.
 
 ## State Persistence
 

@@ -44,7 +44,8 @@ LOG_LEVEL={{ logLevel | 'info' }}
 API_KEY={{! apiKey }}
 ```
 
-If a required variable is not defined, template rendering will fail with an error.
+!!! warning
+    If a required variable is not defined, template rendering will fail with an error. The task will not execute.
 
 **Escape literal braces:**
 ```

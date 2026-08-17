@@ -93,10 +93,19 @@ sputnik contexts        # alias
 
 Generate shell completion scripts.
 
-```bash
-sputnik completion bash
-sputnik completion zsh
-```
+=== "Bash"
+
+    ```bash
+    sputnik completion bash | sudo tee /etc/bash_completion.d/sputnik > /dev/null
+    ```
+
+=== "Zsh"
+
+    ```bash
+    sputnik completion zsh | sudo tee /usr/local/share/zsh/site-functions/_sputnik > /dev/null
+    ```
+
+Restart your shell or source the completion file to activate.
 
 ## Reserved Names
 

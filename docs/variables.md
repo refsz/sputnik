@@ -6,11 +6,12 @@ Variables are resolved values available in tasks via `$ctx->get('name')` and in 
 
 ## Resolution Priority (highest to lowest)
 
-1. Runtime overrides (`-D NAME=value`)
-2. Dynamic variables
-3. Context-specific constants
-4. Global constants
-5. Built-in: `context` = current context name
+!!! info "Resolution Order"
+    1. Runtime overrides (`-D NAME=value`)
+    2. Dynamic variables
+    3. Context-specific constants
+    4. Global constants
+    5. Built-in: `context` = current context name
 
 ## Constants
 
