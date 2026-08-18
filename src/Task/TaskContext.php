@@ -9,12 +9,15 @@ use Sputnik\Console\SputnikOutput;
 use Sputnik\Executor\ExecutionResult;
 use Sputnik\Executor\ExecutorInterface;
 use Sputnik\Template\Exception\MissingVariableException;
+use Sputnik\Template\ShellArgumentValueFormatter;
 use Sputnik\Template\TemplateRenderer;
 use Sputnik\Variable\VariableResolverInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class TaskContext
 {
+    private readonly TemplateRenderer $commandRenderer;
+
     /**
      * @param array<string, mixed> $options
      * @param array<string, mixed> $arguments
@@ -34,6 +37,7 @@ final class TaskContext
         private readonly ?SputnikOutput $sputnikOutput = null,
         private readonly array $runtimeVariables = [],
     ) {
+        $this->commandRenderer = $templateRenderer->withFormatter(new ShellArgumentValueFormatter());
     }
 
     /**
@@ -78,15 +82,18 @@ final class TaskContext
     /**
      * Execute a shell command with variable interpolation.
      *
-     * Variables in the command using {{ VAR }} syntax will be replaced with their values.
+     * Same template syntax as render(), but every value is escaped as a single
+     * shell argument, so a value can never break out of its place in the command.
      * Example: $context->shell('echo {{ APP_ENV }}')
      *
      * @param string                                                          $command The command to execute (supports {{ VAR }} syntax)
      * @param array{env?: array<string, string>, tty?: bool, timeout?: float} $options
+     *
+     * @throws MissingVariableException If a required variable is missing
      */
     public function shell(string $command, array $options = []): ExecutionResult
     {
-        $interpolated = $this->interpolateCommand($command);
+        $interpolated = $this->commandRenderer->render($command);
 
         return $this->shellExecutor->execute($interpolated, [
             'cwd' => $this->workingDir,
@@ -237,37 +244,5 @@ final class TaskContext
     public function getArguments(): array
     {
         return $this->arguments;
-    }
-
-    /**
-     * Interpolate variables in a command string.
-     *
-     * Replaces {{ VAR }} with variable values.
-     * Supports {{ VAR | "default" }} syntax for defaults.
-     */
-    private function interpolateCommand(string $command): string
-    {
-        // Pattern matches {{ VAR }} or {{ VAR | "default" }} or {{ VAR | 'default' }}
-        $pattern = '/\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*(?:\|\s*["\']([^"\']*)["\'])?\s*\}\}/';
-
-        return preg_replace_callback($pattern, function (array $matches): string {
-            $name = $matches[1];
-            $default = $matches[2] ?? '';
-
-            $value = $this->variables->resolve($name, $default);
-
-            // Convert to string for shell, escaping to prevent command injection
-            if (\is_bool($value)) {
-                return escapeshellarg($value ? 'true' : 'false');
-            }
-
-            if (\is_array($value)) {
-                $encoded = json_encode($value);
-
-                return escapeshellarg($encoded !== false ? $encoded : '[]');
-            }
-
-            return escapeshellarg((string) $value);
-        }, $command) ?? $command;
     }
 }

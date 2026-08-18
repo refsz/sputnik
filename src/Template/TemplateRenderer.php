@@ -12,7 +12,17 @@ final class TemplateRenderer
     public function __construct(
         private readonly TemplateParser $parser,
         private readonly VariableResolverInterface $variables,
+        private readonly ValueFormatterInterface $formatter = new VerbatimValueFormatter(),
     ) {
+    }
+
+    /**
+     * Get a renderer for the same template syntax and variables, but with
+     * values formatted for a different target, e.g. escaped for a shell.
+     */
+    public function withFormatter(ValueFormatterInterface $formatter): self
+    {
+        return new self($this->parser, $this->variables, $formatter);
     }
 
     /**
@@ -38,7 +48,7 @@ final class TemplateRenderer
                 $missingVariables[] = $token->value;
             }
 
-            $output .= $this->stringify($value ?? '');
+            $output .= $this->formatter->format($value);
         }
 
         if ($missingVariables !== []) {
@@ -102,32 +112,5 @@ final class TemplateRenderer
             : null;
 
         return $value ?? $token->default;
-    }
-
-    private function stringify(mixed $value): string
-    {
-        if (\is_string($value)) {
-            return $value;
-        }
-
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        if ($value === null) {
-            return '';
-        }
-
-        if (\is_scalar($value)) {
-            return (string) $value;
-        }
-
-        if (\is_array($value)) {
-            $encoded = json_encode($value, \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE);
-
-            return $encoded !== false ? $encoded : '[]';
-        }
-
-        return (string) $value;
     }
 }

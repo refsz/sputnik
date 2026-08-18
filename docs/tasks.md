@@ -167,6 +167,23 @@ $ctx->shellRaw('docker compose up'); // (2)!
 1. Variables in `{{ }}` are resolved and wrapped with `escapeshellarg()` to prevent injection.
 2. Command is passed directly to the shell. Use when you need pipes, redirects, or exact control.
 
+`shell()` uses the same template syntax as `render()` and template files, so
+`{{! required }}` and `{{ name | "default" }}` work in commands too, and
+`\{\{ ... \}\}` stays literal. A missing `{{! required }}` variable throws
+`MissingVariableException` and the command is not executed. A missing optional
+variable becomes an empty, quoted argument (`''`), so it keeps its position in
+the command instead of disappearing.
+
+!!! warning "Commands with their own `{{ }}` syntax"
+    Go templates in `docker` and `kubectl` share the delimiters. `{{.State.Running}}`
+    and `{{range .items}}` are left alone because they do not look like a variable
+    name, but a bare action like `{{end}}` does and is replaced. Use `shellRaw()`
+    for such commands, or escape the braces as `\{\{end\}\}`.
+
+    ```php
+    $ctx->shellRaw('docker inspect -f "{{range .items}}{{.Name}}{{end}}" app');
+    ```
+
 Both methods accept an options array:
 
 ```php

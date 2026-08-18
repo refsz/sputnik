@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Sputnik\Task\TaskContext;
 use Sputnik\Task\TaskRunnerInterface;
+use Sputnik\Template\Exception\MissingVariableException;
 use Sputnik\Template\TemplateParser;
 use Sputnik\Template\TemplateRenderer;
 use Sputnik\Tests\Support\Doubles\FakeShellExecutor;
@@ -109,6 +110,44 @@ final class TaskContextShellInterpolationTest extends TestCase
 
         $executed = $this->executor->getExecutedCommands();
         $this->assertSame("connect 'my server'", $executed[0]['command']);
+    }
+
+    public function testRequiredVariableIsInterpolatedAndEscaped(): void
+    {
+        $this->variables->set('HOST', 'localhost');
+
+        $this->ctx->shell('mysql -h {{! HOST }}');
+
+        $executed = $this->executor->getExecutedCommands();
+        $this->assertSame("mysql -h 'localhost'", $executed[0]['command']);
+    }
+
+    public function testMissingRequiredVariableThrowsInsteadOfLeakingIntoTheCommand(): void
+    {
+        try {
+            $this->ctx->shell('mysql -h {{! HOST }}');
+            $this->fail('Expected MissingVariableException');
+        } catch (MissingVariableException $e) {
+            $this->assertSame(['HOST'], $e->variables);
+        }
+
+        $this->assertSame([], $this->executor->getExecutedCommands());
+    }
+
+    public function testEscapedBracesStayLiteral(): void
+    {
+        $this->ctx->shell('echo \\{\\{ NOT_A_VARIABLE \\}\\}');
+
+        $executed = $this->executor->getExecutedCommands();
+        $this->assertSame('echo {{ NOT_A_VARIABLE }}', $executed[0]['command']);
+    }
+
+    public function testMissingOptionalVariableBecomesEmptyArgument(): void
+    {
+        $this->ctx->shell('echo {{ MISSING }}');
+
+        $executed = $this->executor->getExecutedCommands();
+        $this->assertSame("echo ''", $executed[0]['command']);
     }
 
     public function testShellRawDoesNotInterpolate(): void
