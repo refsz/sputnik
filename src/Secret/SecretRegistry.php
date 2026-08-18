@@ -16,7 +16,7 @@ final class SecretRegistry
     private array $names = [];
 
     /**
-     * @var array<string, string>
+     * @var array<string, list<string>>
      */
     private array $values = [];
 
@@ -66,7 +66,14 @@ final class SecretRegistry
             return;
         }
 
-        $this->values[$name] = $text;
+        // Clear any previous diagnostic for this name on successful remember
+        unset($this->diagnostics[$name]);
+
+        if (!isset($this->values[$name])) {
+            $this->values[$name] = [];
+        }
+
+        $this->values[$name][] = $text;
 
         if (\strlen($text) < self::SHORT_VALUE_LENGTH) {
             $this->addDiagnostic(
@@ -81,11 +88,18 @@ final class SecretRegistry
      */
     public function values(): array
     {
-        $values = array_values(array_unique($this->values));
+        $allValues = [];
+        foreach ($this->values as $valueList) {
+            foreach ($valueList as $value) {
+                $allValues[] = $value;
+            }
+        }
 
-        usort($values, static fn (string $a, string $b): int => \strlen($b) <=> \strlen($a));
+        $unique = array_values(array_unique($allValues));
 
-        return $values;
+        usort($unique, static fn (string $a, string $b): int => \strlen($b) <=> \strlen($a));
+
+        return $unique;
     }
 
     /**
