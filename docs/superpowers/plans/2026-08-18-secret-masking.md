@@ -1705,7 +1705,7 @@ variables:
             command: "pass show project/api"
 ```
 
-See [Secrets](variables.md#secrets) for the exact guarantee and its limits.
+See [Secrets](../../variables.md#secrets) for the exact guarantee and its limits.
 ```
 
 The context paragraph above already states that a context can override
@@ -1719,7 +1719,7 @@ In `docs/tasks.md`, in the `Shell Execution` section after the existing paragrap
 ```markdown
 Values of variables declared under `variables.secrets` are replaced with `***`
 in the echoed command and in the command's output. See
-[Secrets](variables.md#secrets) for what that does and does not cover.
+[Secrets](../../variables.md#secrets) for what that does and does not cover.
 ```
 
 - [ ] **Step 4: Verify the docs build**

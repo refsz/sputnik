@@ -184,6 +184,10 @@ the command instead of disappearing.
     $ctx->shellRaw('docker inspect -f "{{range .items}}{{.Name}}{{end}}" app');
     ```
 
+Values of variables declared under `variables.secrets` are replaced with `***`
+in the echoed command and in the command's output. See
+[Secrets](variables.md#secrets) for what that does and does not cover.
+
 Both methods accept an options array:
 
 ```php

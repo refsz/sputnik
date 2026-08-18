@@ -59,13 +59,13 @@ contexts:
                 appEnv: prod
 ```
 
-Each context can override `variables.constants` (not `dynamics`). The active context is selected at runtime and its constants are deep-merged on top of the global constants. Context names are case-sensitive. See [Contexts](contexts.md).
+Each context can override `variables.constants` (not `dynamics` or `secrets`). The active context is selected at runtime and its constants are deep-merged on top of the global constants. Context names are case-sensitive. See [Contexts](contexts.md).
 
 ---
 
 ## variables
 
-Two sub-sections: `constants` and `dynamics`.
+Three sub-sections: `constants`, `dynamics` and `secrets`.
 
 ### constants
 
@@ -117,6 +117,21 @@ variables:
 ```
 
 See [docs/variables.md](variables.md) for the full list of types and their options.
+
+### secrets
+
+Sensitive variables. Resolved on first use and replaced with `***` in everything
+Sputnik prints. Types `command`, `script` and `env`; a plain scalar is a literal.
+
+```neon
+variables:
+    secrets:
+        apiToken:
+            type: command
+            command: "pass show project/api"
+```
+
+See [Secrets](variables.md#secrets) for the exact guarantee and its limits.
 
 ---
 
