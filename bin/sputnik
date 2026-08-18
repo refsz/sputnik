@@ -77,6 +77,7 @@ $output = new ConsoleOutput();
 // Bootstrap and run
 try {
     $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride);
+    $output = new Sputnik\Secret\RedactingConsoleOutput($output, $kernel->getSecretRedactor());
     $app = $kernel->createApplication($output);
     $exitCode = $app->run(null, $output);
 

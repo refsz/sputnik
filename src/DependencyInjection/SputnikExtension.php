@@ -23,6 +23,8 @@ use Sputnik\Executor\ExecutorInterface;
 use Sputnik\Executor\ShellExecutor;
 use Sputnik\Listener\RegenerateTemplatesOnContextSwitch;
 use Sputnik\Listener\SwitchContextOnServices;
+use Sputnik\Secret\SecretRedactor;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateEngine;
@@ -76,12 +78,24 @@ final class SputnikExtension extends CompilerExtension
             ])
             ->setAutowired(true);
 
+        // Secret Registry & Redactor
+        $builder->addDefinition($this->prefix('secretRegistry'))
+            ->setFactory(SecretRegistry::class)
+            ->setAutowired(true);
+
+        $builder->addDefinition($this->prefix('secretRedactor'))
+            ->setFactory(SecretRedactor::class, [
+                'registry' => $this->prefix('@secretRegistry'),
+            ])
+            ->setAutowired(true);
+
         // Variable Resolver
         $builder->addDefinition($this->prefix('variableResolver'))
             ->setFactory(VariableResolver::class, [
                 'config' => $this->prefix('@config'),
                 'contextName' => $params['contextName'],
                 'workingDir' => $params['workingDir'],
+                'secrets' => $this->prefix('@secretRegistry'),
             ])
             ->setAutowired(true);
 
@@ -147,6 +161,7 @@ final class SputnikExtension extends CompilerExtension
                 'workingDir' => $params['workingDir'],
                 'contextName' => $params['contextName'],
                 'environmentDetector' => $this->prefix('@environmentDetector'),
+                'secrets' => $this->prefix('@secretRegistry'),
             ])
             ->setAutowired(true);
 

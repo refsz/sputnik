@@ -17,6 +17,8 @@ use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\ShouldNotHappenException;
 use Sputnik\Executor\EnvironmentAwareExecutor;
 use Sputnik\Executor\ShellExecutor;
+use Sputnik\Secret\SecretRedactor;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Template\TemplateConfig;
 use Sputnik\Template\TemplateEngine;
 use Sputnik\Variable\VariableResolverInterface;
@@ -29,6 +31,8 @@ final class TaskRunner implements TaskRunnerInterface
 
     private readonly OptionCoercer $optionCoercer;
 
+    private readonly SecretRedactor $redactor;
+
     public function __construct(
         private readonly TaskDiscovery $discovery,
         private readonly VariableResolverInterface $variableResolver,
@@ -39,8 +43,13 @@ final class TaskRunner implements TaskRunnerInterface
         private readonly string $workingDir,
         private readonly string $contextName = 'local',
         private readonly ?EnvironmentDetector $environmentDetector = null,
+        private readonly SecretRegistry $secrets = new SecretRegistry(),
     ) {
         $this->optionCoercer = new OptionCoercer();
+        // A failure message embeds the interpolated command (and thus any secret it
+        // contained) via ExecutionException, so it needs redacting before it leaves
+        // the runner as a TaskResult - unlike ExecutionResult, which must stay raw.
+        $this->redactor = new SecretRedactor($this->secrets);
     }
 
     /**
@@ -109,19 +118,31 @@ final class TaskRunner implements TaskRunnerInterface
 
             $this->eventDispatcher->dispatch(new AfterTaskEvent($metadata, $result, $duration));
 
+            $this->reportSecretDiagnostics($logger);
+
             return $result->withDuration($duration);
         } catch (\Throwable $throwable) {
             $duration = microtime(true) - $startTime;
-            $logger->error('Task failed: ' . $throwable->getMessage());
+            $message = $this->redactor->redact($throwable->getMessage());
+            $logger->error('Task failed: ' . $message);
             $this->eventDispatcher->dispatch(new TaskFailedEvent($metadata, $throwable));
 
-            return TaskResult::failure($throwable->getMessage())->withDuration($duration);
+            $this->reportSecretDiagnostics($logger);
+
+            return TaskResult::failure($message)->withDuration($duration);
         }
     }
 
     public function getContextName(): string
     {
         return $this->contextName;
+    }
+
+    private function reportSecretDiagnostics(LoggerInterface $logger): void
+    {
+        foreach ($this->secrets->takeDiagnostics() as $message) {
+            $logger->warning($message);
+        }
     }
 
     /**
