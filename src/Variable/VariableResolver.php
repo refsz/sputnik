@@ -75,8 +75,18 @@ final class VariableResolver implements VariableResolverInterface
     {
         $this->initialize();
 
-        if ($this->secrets->isSecret(explode('.', $name)[0])) {
-            return true;
+        $root = explode('.', $name)[0];
+        if ($this->secrets->isSecret($root)) {
+            if ($root === $name) {
+                return true;
+            }
+
+            // A nested path under a secret root is an explicit reference to
+            // the secret's value, so resolving here (unlike the plain-name
+            // case above) is legitimate and keeps has() honest with resolve().
+            if (!\array_key_exists($root, $this->resolved)) {
+                $this->resolveSecret($root);
+            }
         }
 
         return $this->hasNestedValue($this->resolved, $name);

@@ -138,6 +138,47 @@ final class VariableResolverSecretsTest extends TestCase
         $resolver->resolve('branch');
     }
 
+    public function testHasIsHonestAboutNestedPathsUnderAPlainStringSecret(): void
+    {
+        $resolver = $this->resolver(['apiToken' => 'plain-string-value']);
+
+        $this->assertTrue($resolver->has('apiToken'));
+        $this->assertFalse($resolver->has('apiToken.sub'));
+        $this->assertSame('fallback', $resolver->resolve('apiToken.sub', 'fallback'));
+    }
+
+    public function testHasOnThePlainSecretNameStillDoesNotResolve(): void
+    {
+        $marker = sys_get_temp_dir() . '/sputnik_secret_marker_' . uniqid();
+        $resolver = $this->resolver([
+            'apiToken' => ['type' => 'command', 'command' => 'touch ' . escapeshellarg($marker) . ' && echo value'],
+        ]);
+
+        try {
+            $this->assertTrue($resolver->has('apiToken'));
+            $this->assertFileDoesNotExist($marker);
+        } finally {
+            if (file_exists($marker)) {
+                unlink($marker);
+            }
+        }
+    }
+
+    public function testHasOnANestedPathUnrelatedToAnySecretBehavesAsBefore(): void
+    {
+        $config = new Configuration([
+            'variables' => [
+                'constants' => ['foo' => ['bar' => 'baz']],
+            ],
+        ]);
+
+        $resolver = new VariableResolver($config, null, sys_get_temp_dir(), new SecretRegistry());
+
+        $this->assertTrue($resolver->has('foo.bar'));
+        $this->assertFalse($resolver->has('foo.missing'));
+        $this->assertFalse($resolver->has('unknown.path'));
+    }
+
     /**
      * @param array<string, mixed> $secrets
      */
