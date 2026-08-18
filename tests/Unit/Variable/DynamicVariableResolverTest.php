@@ -138,4 +138,29 @@ final class DynamicVariableResolverTest extends TestCase
         $result = $this->resolver->resolve(['command' => 'echo no-type']);
         $this->assertSame('no-type', $result);
     }
+
+    public function testEnvTypeReadsTheEnvironmentVariable(): void
+    {
+        putenv('SPUTNIK_TEST_SECRET=from-env');
+
+        try {
+            $value = $this->resolver->resolve(['type' => 'env', 'name' => 'SPUTNIK_TEST_SECRET']);
+        } finally {
+            putenv('SPUTNIK_TEST_SECRET');
+        }
+
+        $this->assertSame('from-env', $value);
+    }
+
+    public function testEnvTypeReturnsNullWhenUnset(): void
+    {
+        $value = $this->resolver->resolve(['type' => 'env', 'name' => 'SPUTNIK_TEST_MISSING']);
+
+        $this->assertNull($value);
+    }
+
+    public function testEnvTypeReturnsNullWithoutName(): void
+    {
+        $this->assertNull($this->resolver->resolve(['type' => 'env']));
+    }
 }

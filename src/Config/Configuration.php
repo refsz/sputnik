@@ -187,6 +187,16 @@ final class Configuration
     }
 
     /**
+     * Get secret variable configurations.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSecrets(): array
+    {
+        return $this->get('variables.secrets', []);
+    }
+
+    /**
      * Get the default context name.
      */
     public function getDefaultContext(): string
