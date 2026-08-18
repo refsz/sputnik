@@ -12,6 +12,8 @@ use Sputnik\Executor\ExecutionResult;
 use Sputnik\Executor\ExecutorInterface;
 use Sputnik\Task\TaskContext;
 use Sputnik\Task\TaskRunnerInterface;
+use Sputnik\Template\TemplateParser;
+use Sputnik\Template\TemplateRenderer;
 use Sputnik\Variable\VariableResolverInterface;
 
 final class TaskContextEnvironmentTest extends TestCase
@@ -112,8 +114,10 @@ final class TaskContextEnvironmentTest extends TestCase
         ExecutorInterface $executor,
         ?VariableResolverInterface $variables = null,
     ): TaskContext {
+        $resolver = $variables ?? $this->createMock(VariableResolverInterface::class);
+
         return new TaskContext(
-            variables: $variables ?? $this->createMock(VariableResolverInterface::class),
+            variables: $resolver,
             options: [],
             arguments: [],
             contextName: 'dev',
@@ -121,6 +125,7 @@ final class TaskContextEnvironmentTest extends TestCase
             logger: $this->createMock(LoggerInterface::class),
             shellExecutor: $executor,
             taskRunner: $this->createMock(TaskRunnerInterface::class),
+            templateRenderer: new TemplateRenderer(new TemplateParser(), $resolver),
         );
     }
 }

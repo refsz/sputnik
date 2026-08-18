@@ -35,7 +35,16 @@ final class TemplateEngine
         private string $contextName = 'local',
     ) {
         $this->parser = new TemplateParser();
-        $this->renderer = new TemplateRenderer($this->parser, $this->variables);
+        $this->renderer = $this->rendererFor($this->variables);
+    }
+
+    /**
+     * Create a renderer for a different variable scope, e.g. a task run with
+     * runtime overrides. Parses templates exactly like template files are parsed.
+     */
+    public function rendererFor(VariableResolverInterface $variables): TemplateRenderer
+    {
+        return new TemplateRenderer($this->parser, $variables);
     }
 
     /**

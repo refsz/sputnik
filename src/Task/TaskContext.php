@@ -8,6 +8,8 @@ use Psr\Log\LoggerInterface;
 use Sputnik\Console\SputnikOutput;
 use Sputnik\Executor\ExecutionResult;
 use Sputnik\Executor\ExecutorInterface;
+use Sputnik\Template\Exception\MissingVariableException;
+use Sputnik\Template\TemplateRenderer;
 use Sputnik\Variable\VariableResolverInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -27,6 +29,7 @@ final class TaskContext
         private readonly LoggerInterface $logger,
         private readonly ExecutorInterface $shellExecutor,
         private readonly TaskRunnerInterface $taskRunner,
+        private readonly TemplateRenderer $templateRenderer,
         private readonly ?OutputInterface $output = null,
         private readonly ?SputnikOutput $sputnikOutput = null,
         private readonly array $runtimeVariables = [],
@@ -55,6 +58,21 @@ final class TaskContext
     public function argument(string $name, mixed $default = null): mixed
     {
         return $this->arguments[$name] ?? $default;
+    }
+
+    /**
+     * Substitute variables in a string, using the template renderer.
+     *
+     * Same syntax and same variables as a template file: {{ name }},
+     * {{! required }}, {{ name | "default" }}, plus the runtime variable
+     * overrides of this run. Values are inserted verbatim - in contrast to
+     * shell(), nothing is escaped, so this is meant for file content.
+     *
+     * @throws MissingVariableException If a required variable is missing
+     */
+    public function render(string $template): string
+    {
+        return $this->templateRenderer->render($template);
     }
 
     /**

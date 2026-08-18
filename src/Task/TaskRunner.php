@@ -167,6 +167,7 @@ final class TaskRunner implements TaskRunnerInterface
             logger: $logger,
             shellExecutor: $shellExecutor,
             taskRunner: $this,
+            templateRenderer: $this->templateEngine->rendererFor($variables),
             output: $output,
             sputnikOutput: $sputnikOutput,
             runtimeVariables: $runtimeVariables,

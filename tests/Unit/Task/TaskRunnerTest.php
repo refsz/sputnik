@@ -24,7 +24,10 @@ use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateConfig;
 use Sputnik\Template\TemplateEngine;
+use Sputnik\Template\TemplateParser;
+use Sputnik\Template\TemplateRenderer;
 use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
+use Sputnik\Variable\VariableResolverInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -41,8 +44,8 @@ final class TaskRunnerTest extends TestCase
         $this->discovery = $this->createMock(TaskDiscovery::class);
         $this->container = $this->createMock(ContainerInterface::class);
         $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $this->templateEngine = $this->createMock(TemplateEngine::class);
         $this->variables = new InMemoryVariableResolver();
+        $this->templateEngine = $this->createTemplateEngineMock();
 
         $this->templateEngine->method('getTemplatesForContext')->willReturn([]);
         $this->eventDispatcher->method('dispatch')->willReturnCallback(static fn ($e) => $e);
@@ -388,7 +391,7 @@ final class TaskRunnerTest extends TestCase
         $this->stubTask(TaskResult::success());
 
         $renderCount = 0;
-        $this->templateEngine = $this->createMock(TemplateEngine::class);
+        $this->templateEngine = $this->createTemplateEngineMock();
         $this->templateEngine->method('getTemplatesForContext')
             ->willReturn(['env' => new TemplateConfig('env', 'src', 'dist')]);
         $this->templateEngine->method('renderAll')
@@ -403,6 +406,16 @@ final class TaskRunnerTest extends TestCase
         $runner->run('test:task');
 
         $this->assertSame(1, $renderCount);
+    }
+
+    private function createTemplateEngineMock(): TemplateEngine
+    {
+        $engine = $this->createMock(TemplateEngine::class);
+        $engine->method('rendererFor')->willReturnCallback(
+            static fn (VariableResolverInterface $variables): TemplateRenderer => new TemplateRenderer(new TemplateParser(), $variables),
+        );
+
+        return $engine;
     }
 
     private function createRunner(): TaskRunner

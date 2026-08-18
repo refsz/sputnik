@@ -122,6 +122,30 @@ $ctx->get('varName');            // resolve a variable
 $ctx->get('varName', 'default'); // with fallback default
 ```
 
+### Template Strings
+
+`render()` substitutes variables in any string, with the same syntax a template
+file uses -- `{{ name }}`, `{{! required }}`, `{{ name | "default" }}`.
+
+The renderer comes from the template engine, so a string renders exactly like a
+template file would: same parser, same variables. On top of that it sees the
+runtime overrides of the current run (`-D` / `--define`), which template files
+do not, because those are rendered before the task starts.
+
+```php
+$content = $ctx->render(file_get_contents('templates/config.yaml'));
+file_put_contents('.ddev/config.yaml', $content);
+```
+
+Values are inserted verbatim, nothing is escaped -- unlike `shell()`. A missing
+`{{! required }}` variable throws `MissingVariableException`, a missing optional
+one renders as an empty string.
+
+Use it when a task has to produce file content itself, for example when it wipes
+a directory that configured templates were rendered into and has to put them
+back within the same run. Templates declared under `templates:` are still
+rendered automatically before the first task runs.
+
 ### Options and Arguments
 
 ```php

@@ -8,6 +8,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Sputnik\Task\TaskContext;
 use Sputnik\Task\TaskRunnerInterface;
+use Sputnik\Template\TemplateParser;
+use Sputnik\Template\TemplateRenderer;
 use Sputnik\Tests\Support\Doubles\FakeShellExecutor;
 use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
 
@@ -33,6 +35,7 @@ final class TaskContextShellInterpolationTest extends TestCase
             logger: new NullLogger(),
             shellExecutor: $this->executor,
             taskRunner: $this->taskRunner,
+            templateRenderer: new TemplateRenderer(new TemplateParser(), $this->variables),
         );
     }
 

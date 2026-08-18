@@ -10,6 +10,8 @@ use Sputnik\Console\SputnikOutput;
 use Sputnik\Task\TaskContext;
 use Sputnik\Task\TaskResult;
 use Sputnik\Task\TaskRunnerInterface;
+use Sputnik\Template\TemplateParser;
+use Sputnik\Template\TemplateRenderer;
 use Sputnik\Tests\Support\Doubles\FakeShellExecutor;
 use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -221,6 +223,7 @@ final class TaskContextTest extends TestCase
             logger: $this->logger,
             shellExecutor: $this->executor,
             taskRunner: $this->taskRunner,
+            templateRenderer: new TemplateRenderer(new TemplateParser(), $this->variables),
             output: null,
             sputnikOutput: null,
         );
@@ -331,6 +334,7 @@ final class TaskContextTest extends TestCase
             logger: $this->logger,
             shellExecutor: $this->executor,
             taskRunner: $this->taskRunner,
+            templateRenderer: new TemplateRenderer(new TemplateParser(), $this->variables),
             output: $withOutput ? $this->output : null,
             sputnikOutput: $withOutput ? $this->sputnikOutput : null,
         );
