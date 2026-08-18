@@ -15,11 +15,17 @@ class RedactingOutput implements OutputInterface
     ) {
     }
 
+    /**
+     * @param string|iterable<mixed> $messages
+     */
     public function write(string|iterable $messages, bool $newline = false, int $options = 0): void
     {
         $this->inner->write($this->redactMessages($messages), $newline, $options);
     }
 
+    /**
+     * @param string|iterable<mixed> $messages
+     */
     public function writeln(string|iterable $messages, int $options = 0): void
     {
         $this->inner->writeln($this->redactMessages($messages), $options);
@@ -81,9 +87,9 @@ class RedactingOutput implements OutputInterface
     }
 
     /**
-     * @param string|iterable<string> $messages
+     * @param string|iterable<mixed> $messages
      *
-     * @return string|list<string>
+     * @return string|list<mixed>
      */
     private function redactMessages(string|iterable $messages): string|array
     {
@@ -93,7 +99,7 @@ class RedactingOutput implements OutputInterface
 
         $redacted = [];
         foreach ($messages as $message) {
-            $redacted[] = $this->redactor->redact($message);
+            $redacted[] = \is_string($message) ? $this->redactor->redact($message) : $message;
         }
 
         return $redacted;

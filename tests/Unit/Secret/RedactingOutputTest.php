@@ -89,4 +89,23 @@ final class RedactingOutputTest extends TestCase
 
         $this->assertInstanceOf(RedactingOutput::class, $decorated->getErrorOutput());
     }
+
+    public function testMixedIterablePreservesNonStrings(): void
+    {
+        $this->output->writeln([
+            'secret: ghp_abcdefghij',
+            42,
+            new class {
+                public function __toString(): string
+                {
+                    return 'stringable object';
+                }
+            },
+        ]);
+
+        $output = $this->inner->fetch();
+        $this->assertStringContainsString('secret: ***', $output);
+        $this->assertStringContainsString('42', $output);
+        $this->assertStringContainsString('stringable object', $output);
+    }
 }
