@@ -99,7 +99,11 @@ class RedactingOutput implements OutputInterface
 
         $redacted = [];
         foreach ($messages as $message) {
-            $redacted[] = \is_string($message) ? $this->redactor->redact($message) : $message;
+            $redacted[] = match (true) {
+                \is_string($message) => $this->redactor->redact($message),
+                \is_scalar($message), $message instanceof \Stringable => $this->redactor->redact((string) $message),
+                default => $message,
+            };
         }
 
         return $redacted;
