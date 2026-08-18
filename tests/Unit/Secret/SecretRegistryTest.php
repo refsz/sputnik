@@ -99,20 +99,35 @@ final class SecretRegistryTest extends TestCase
         $this->assertSame([], $this->registry->takeDiagnostics());
     }
 
-    public function testRememberingShortThenLongValueForSameNameLeavesNoDiagnostic(): void
+    public function testRememberingShortThenLongValueForSameNameStillReportsShortDiagnostic(): void
     {
         $this->registry->remember('apiToken', 'abc');
         $this->registry->remember('apiToken', 'ghp_abcdefghij');
 
-        $this->assertSame([], $this->registry->takeDiagnostics());
+        $this->assertSame(
+            ["secret 'apiToken' has a short value; unrelated output may be masked too"],
+            $this->registry->takeDiagnostics(),
+        );
     }
 
     public function testRememberingTwoDifferentValuesForSameNameReturnsBoth(): void
     {
-        $this->registry->remember('apiToken', 'ghp_abcdefghij');
-        $this->registry->remember('apiToken', 'ghp_other12345');
+        $this->registry->remember('apiToken', 'ghp_short');
+        $this->registry->remember('apiToken', 'ghp_this_is_a_much_longer_token');
 
-        $this->assertSame(['ghp_abcdefghij', 'ghp_other12345'], $this->registry->values());
+        $this->assertSame(['ghp_this_is_a_much_longer_token', 'ghp_short'], $this->registry->values());
+    }
+
+    public function testRememberingShortAndLongValueForSameNameReturnsAllAndReportsDiagnostic(): void
+    {
+        $this->registry->remember('apiToken', 'abc');
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $this->assertSame(['ghp_abcdefghij', 'abc'], $this->registry->values());
+        $this->assertSame(
+            ["secret 'apiToken' has a short value; unrelated output may be masked too"],
+            $this->registry->takeDiagnostics(),
+        );
     }
 
     public function testRememberingLongThenShortValueForSameNameReportsShortDiagnostic(): void

@@ -66,16 +66,20 @@ final class SecretRegistry
             return;
         }
 
-        // Clear any previous diagnostic for this name on successful remember
+        // Clear any previous event diagnostic for this name on successful remember
         unset($this->diagnostics[$name]);
 
         if (!isset($this->values[$name])) {
             $this->values[$name] = [];
         }
 
-        $this->values[$name][] = $text;
+        // Deduplicate at write time: append only if not already present
+        if (!\in_array($text, $this->values[$name], true)) {
+            $this->values[$name][] = $text;
+        }
 
-        if (\strlen($text) < self::SHORT_VALUE_LENGTH) {
+        // Recompute state diagnostic: set if any accumulated value is short
+        if ($this->hasShortValue($name)) {
             $this->addDiagnostic(
                 $name,
                 \sprintf("secret '%s' has a short value; unrelated output may be masked too", $name),
@@ -116,5 +120,20 @@ final class SecretRegistry
     private function addDiagnostic(string $name, string $message): void
     {
         $this->diagnostics[$name] = $message;
+    }
+
+    private function hasShortValue(string $name): bool
+    {
+        if (!isset($this->values[$name])) {
+            return false;
+        }
+
+        foreach ($this->values[$name] as $value) {
+            if (\strlen($value) < self::SHORT_VALUE_LENGTH) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
