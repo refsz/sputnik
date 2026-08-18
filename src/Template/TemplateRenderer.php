@@ -32,19 +32,13 @@ final class TemplateRenderer
                 continue;
             }
 
-            // It's a variable token
             $value = $this->resolveVariable($token);
 
-            if ($value === null) {
-                if ($token->isRequired()) {
-                    $missingVariables[] = $token->value;
-                }
-
-                // For optional variables without default, output empty string
-                $output .= '';
-            } else {
-                $output .= $this->stringify($value);
+            if ($value === null && $token->isRequired()) {
+                $missingVariables[] = $token->value;
             }
+
+            $output .= $this->stringify($value ?? '');
         }
 
         if ($missingVariables !== []) {
@@ -71,23 +65,7 @@ final class TemplateRenderer
      */
     public function canRender(string $template): bool
     {
-        $tokens = $this->parser->parse($template);
-
-        foreach ($tokens as $token) {
-            if (!$token->isRequired()) {
-                continue;
-            }
-
-            if ($token->hasDefault()) {
-                continue;
-            }
-
-            if (!$this->variables->has($token->value)) {
-                return false;
-            }
-        }
-
-        return true;
+        return $this->getMissingVariables($template) === [];
     }
 
     /**
@@ -105,11 +83,7 @@ final class TemplateRenderer
                 continue;
             }
 
-            if ($token->hasDefault()) {
-                continue;
-            }
-
-            if (!$this->variables->has($token->value)) {
+            if ($this->resolveVariable($token) === null) {
                 $missing[] = $token->value;
             }
         }
@@ -117,19 +91,17 @@ final class TemplateRenderer
         return array_values(array_unique($missing));
     }
 
+    /**
+     * A variable that resolves to null counts as absent, so that a null value
+     * falls back to the default and a required one is reported as missing.
+     */
     private function resolveVariable(Token $token): mixed
     {
-        // First try to resolve from variables
-        if ($this->variables->has($token->value)) {
-            return $this->variables->resolve($token->value);
-        }
+        $value = $this->variables->has($token->value)
+            ? $this->variables->resolve($token->value)
+            : null;
 
-        // Fall back to default if available
-        if ($token->hasDefault()) {
-            return $token->default;
-        }
-
-        return null;
+        return $value ?? $token->default;
     }
 
     private function stringify(mixed $value): string

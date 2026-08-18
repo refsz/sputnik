@@ -196,6 +196,38 @@ final class TemplateRendererTest extends TestCase
         $this->assertContains('missing2', $missing);
     }
 
+    public function testNullValueFallsBackToDefault(): void
+    {
+        $this->variables->set('port', null);
+
+        $result = $this->renderer->render('Port: {{ port | "3306" }}');
+
+        $this->assertSame('Port: 3306', $result);
+    }
+
+    public function testRequiredVariableWithNullValueAndDefaultDoesNotThrow(): void
+    {
+        $this->variables->set('port', null);
+
+        $result = $this->renderer->render('{{! port | "3306" }}');
+
+        $this->assertSame('3306', $result);
+    }
+
+    public function testCanRenderReturnsFalseWhenRequiredVariableIsNull(): void
+    {
+        $this->variables->set('apiKey', null);
+
+        $this->assertFalse($this->renderer->canRender('{{! apiKey }}'));
+    }
+
+    public function testGetMissingVariablesReportsNullValuedRequiredVariable(): void
+    {
+        $this->variables->set('apiKey', null);
+
+        $this->assertSame(['apiKey'], $this->renderer->getMissingVariables('{{! apiKey }}'));
+    }
+
     public function testPreservesWhitespace(): void
     {
         $this->variables->set('value', 'test');
