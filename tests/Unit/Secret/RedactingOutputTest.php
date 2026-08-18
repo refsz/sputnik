@@ -11,6 +11,7 @@ use Sputnik\Secret\SecretRedactor;
 use Sputnik\Secret\SecretRegistry;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class RedactingOutputTest extends TestCase
@@ -107,5 +108,49 @@ final class RedactingOutputTest extends TestCase
         $this->assertStringContainsString('token ***', $output);
         $this->assertStringContainsString('42', $output);
         $this->assertStringContainsString('3.14', $output);
+    }
+
+    public function testNonStringableItemsPassThroughUntouched(): void
+    {
+        $plainObject = new class {};
+        $secret = 'token ghp_abcdefghij';
+
+        $registry = new SecretRegistry();
+        $registry->declareSecrets(['apiToken']);
+        $registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $recordingOutput = new RecordingOutput();
+        $output = new RedactingOutput($recordingOutput, new SecretRedactor($registry));
+
+        $output->write([$secret, $plainObject]);
+
+        $this->assertCount(1, $recordingOutput->capturedMessages);
+        $messages = $recordingOutput->capturedMessages[0];
+
+        $this->assertIsArray($messages);
+        $this->assertCount(2, $messages);
+        $this->assertSame('token ***', $messages[0]);
+        $this->assertSame($plainObject, $messages[1]);
+    }
+}
+
+/**
+ * @internal Test helper: records messages passed to write() before formatting
+ */
+final class RecordingOutput extends Output
+{
+    /**
+     * @var array<int, mixed>
+     */
+    public array $capturedMessages = [];
+
+    public function write(string|iterable $messages, bool $newline = false, int $options = 0): void
+    {
+        $this->capturedMessages[] = $messages;
+    }
+
+    protected function doWrite(string $message, bool $newline): void
+    {
+        // Do not render anything
     }
 }
