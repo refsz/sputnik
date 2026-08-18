@@ -4,12 +4,36 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
     labels:
       - dependencies
+    commit-message:
+      prefix: "[BUILD]"
+    groups:
+      dev-tools:
+        applies-to: version-updates
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      runtime:
+        applies-to: version-updates
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
     labels:
       - dependencies
+    commit-message:
+      prefix: "[CI]"
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
