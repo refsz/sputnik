@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Sputnik\Variable;
 
 use Sputnik\Config\Configuration;
+use Sputnik\Exception\InvalidConfigException;
+use Sputnik\Secret\SecretRegistry;
 
 final class VariableResolver implements VariableResolverInterface
 {
@@ -26,6 +28,7 @@ final class VariableResolver implements VariableResolverInterface
         private readonly Configuration $config,
         private ?string $contextName = null,
         ?string $workingDir = null,
+        private readonly SecretRegistry $secrets = new SecretRegistry(),
     ) {
         $this->dynamicResolver = new DynamicVariableResolver($workingDir);
     }
@@ -60,12 +63,21 @@ final class VariableResolver implements VariableResolverInterface
     {
         $this->initialize();
 
+        $root = explode('.', $name)[0];
+        if ($this->secrets->isSecret($root) && !\array_key_exists($root, $this->resolved)) {
+            $this->resolveSecret($root);
+        }
+
         return $this->getNestedValue($this->resolved, $name, $default);
     }
 
     public function has(string $name): bool
     {
         $this->initialize();
+
+        if ($this->secrets->isSecret(explode('.', $name)[0])) {
+            return true;
+        }
 
         return $this->hasNestedValue($this->resolved, $name);
     }
@@ -125,7 +137,91 @@ final class VariableResolver implements VariableResolverInterface
             $this->resolved = $this->mergeDeep($this->resolved, $this->runtimeOverrides);
         }
 
+        $this->declareSecrets();
+
         $this->initialized = true;
+    }
+
+    private function declareSecrets(): void
+    {
+        $definitions = $this->config->getSecrets();
+
+        if ($definitions === []) {
+            return;
+        }
+
+        $declaredElsewhere = array_merge(
+            $this->config->getConstants(),
+            $this->config->getDynamics(),
+            $this->contextConstants(),
+        );
+
+        foreach (array_keys($definitions) as $name) {
+            if (\array_key_exists($name, $declaredElsewhere)) {
+                throw new InvalidConfigException(\sprintf(
+                    "Variable '%s' is declared as a secret and as a constant or dynamic variable",
+                    $name,
+                ));
+            }
+
+            $this->assertSupportedSecretType($name, $definitions[$name]);
+        }
+
+        $this->secrets->declareSecrets(array_keys($definitions));
+
+        // A runtime override of a secret never goes through resolveSecret(), so
+        // its value has to reach the registry here or it would print unmasked.
+        foreach (array_keys($definitions) as $name) {
+            if (\array_key_exists($name, $this->resolved)) {
+                $this->secrets->remember($name, $this->resolved[$name]);
+            }
+        }
+    }
+
+    /**
+     * Context constants are merged into the resolved set before secrets are
+     * declared, so a colliding name there would silently declassify a secret.
+     *
+     * @return array<string, mixed>
+     */
+    private function contextConstants(): array
+    {
+        if ($this->contextName === null) {
+            return [];
+        }
+
+        $context = $this->config->getContext($this->contextName);
+
+        return $context['variables']['constants'] ?? [];
+    }
+
+    private function assertSupportedSecretType(string $name, mixed $definition): void
+    {
+        if (!\is_array($definition)) {
+            return;
+        }
+
+        $type = $definition['type'] ?? 'command';
+
+        if (!\in_array($type, ['command', 'script', 'env'], true)) {
+            throw new InvalidConfigException(\sprintf(
+                "Secret '%s' uses unsupported type '%s'; use command, script or env",
+                $name,
+                \is_string($type) ? $type : get_debug_type($type),
+            ));
+        }
+    }
+
+    private function resolveSecret(string $name): void
+    {
+        $definition = $this->config->getSecrets()[$name];
+
+        $value = \is_array($definition)
+            ? $this->dynamicResolver->resolve($definition)
+            : $definition;
+
+        $this->resolved[$name] = $value;
+        $this->secrets->remember($name, $value);
     }
 
     /**
