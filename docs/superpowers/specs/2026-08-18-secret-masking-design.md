@@ -132,7 +132,10 @@ this project rejects. A boolean secret renders as `true`/`false` through the
 verbatim value formatter and is then masked at word boundaries, which does hit
 unrelated occurrences; the warning below says so.
 
-**`RedactingOutput`** — a decorator around `OutputInterface`, applied once in
+**`RedactingOutput`** and **`RedactingConsoleOutput`** — a decorator around
+`OutputInterface`, plus a subclass implementing `ConsoleOutputInterface` so that
+wrapping a `ConsoleOutput` keeps `getErrorOutput()` and Symfony's error rendering
+on stderr. Applied once in
 `bin/sputnik`, where the `ConsoleOutput` is created and handed to
 `$app->run(null, $output)`. Every console channel passes through that one
 object, so the decorator covers the command echo, streamed process output,
@@ -142,10 +145,25 @@ Wrapping there rather than in `Application::doRun()` also covers Symfony's own
 `renderThrowable()` and the `catch` blocks in `bin/sputnik:92-100`, which print
 bootstrap errors, and it leaves `Application` untouched.
 
-The registry is created in `bin/sputnik` before the `Kernel`, because the output
-exists before the container does, and is handed to the `Kernel` so the container
-uses the same instance. It starts empty and fills as secrets resolve; an empty
-registry redacts nothing, so early wrapping is harmless.
+The registry is a container service. The container is compiled and cached
+(`ContainerLoader`, `.sputnik/cache`), so a runtime object cannot travel through
+extension parameters; instead `bin/sputnik` builds the `Kernel` first and then
+wraps the output with the redactor the container already holds:
+
+```php
+$output = new ConsoleOutput();
+$kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride);
+$output = new RedactingConsoleOutput($output, $kernel->getSecretRedactor());
+$exitCode = $kernel->createApplication()->run(null, $output);
+```
+
+The registry starts empty and fills as secrets resolve, so the wrap order costs
+nothing: no secret can be known before the container exists.
+
+Redaction sits at the output layer, not in an `OutputFormatter` decorator,
+because `ShellExecutor::streamOutput()` writes with `OutputInterface::OUTPUT_RAW`
+- which bypasses formatting entirely. A formatter would miss the largest leak
+path.
 
 ## Components
 
@@ -157,9 +175,11 @@ registry redacts nothing, so early wrapping is harmless.
 | `src/Config/Configuration.php` | `getSecrets()`, analogous to `getDynamics()` |
 | `src/Variable/VariableResolver.php` | lazy resolution path for secret names, registry notification, collision check |
 | `src/Variable/DynamicVariableResolver.php` | one `match` arm for `type: env` |
-| `bin/sputnik` | create the registry, wrap `ConsoleOutput` in `RedactingOutput` |
-| `src/Kernel.php` | accept the registry and pass it to the container |
-| `src/DependencyInjection/SputnikExtension.php` | register registry and redactor, inject the registry into `VariableResolver` |
+| `src/Secret/RedactingConsoleOutput.php` | new - the `ConsoleOutputInterface` variant, so stderr keeps working |
+| `bin/sputnik` | wrap `ConsoleOutput` after the `Kernel` is built |
+| `src/Kernel.php` | `getSecretRedactor()` accessor |
+| `src/Task/TaskRunner.php` | log the registry's diagnostics after a task run |
+| `src/DependencyInjection/SputnikExtension.php` | register registry and redactor, inject the registry into `VariableResolver` and `TaskRunner` |
 | `docs/variables.md`, `docs/configuration.md` | document the section, the guarantees and the limits |
 
 ## Data flow
@@ -197,8 +217,8 @@ These belong in the documentation, not in the guarantee:
 - A task using `echo` or `file_put_contents()` writes outside Symfony's output
   and is not redacted.
 - `ExecutionResult` carries raw output and the raw command, by decision.
-- Errors raised before the config is read cannot be redacted, because no secret
-  is known at that point. A NEON parse error that quotes a line containing a
+- Errors raised before the container is built cannot be redacted, because no
+  secret is known at that point. A NEON parse error that quotes a line containing a
   literal secret is the one case where this is visible — another reason for the
   documentation to point at `pass`, `op` and the environment instead of literals.
 
