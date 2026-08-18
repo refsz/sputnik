@@ -92,4 +92,24 @@ final class SecretRedactorTest extends TestCase
 
         $this->assertSame('xdebug: ***', $this->redactor->redact('xdebug: false'));
     }
+
+    public function testEightCharValueIsReplacedEmbedded(): void
+    {
+        $this->registry->declareSecrets(['boundary']);
+        $this->registry->remember('boundary', 'abcdefgh');
+
+        $this->assertSame('xx***yy', $this->redactor->redact('xxabcdefghyy'));
+    }
+
+    public function testSevenCharValueIsReplacedOnlyAtBoundary(): void
+    {
+        $this->registry->declareSecrets(['sevenChar', 'eightChar']);
+        $this->registry->remember('sevenChar', 'abcdefg');
+        $this->registry->remember('eightChar', 'abcdefgh');
+
+        $this->assertSame(
+            'xx***yy *** end',
+            $this->redactor->redact('xxabcdefghyy abcdefg end'),
+        );
+    }
 }
