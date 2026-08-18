@@ -52,7 +52,7 @@ final class SecretMaskingTest extends TestCase
         $this->assertStringContainsString('***', $printed);
     }
 
-    public function testFailureMessageIsMasked(): void
+    public function testFailureIsMaskedOnPrintButRawOnTheResult(): void
     {
         $buffer = new BufferedOutput();
         $registry = new SecretRegistry();
@@ -70,8 +70,15 @@ final class SecretMaskingTest extends TestCase
         $result = $this->runTask($task, $registry, $output);
 
         $this->assertFalse($result->isSuccessful());
-        $this->assertStringNotContainsString(self::SECRET, (string) $result->message);
-        $this->assertStringNotContainsString(self::SECRET, $buffer->fetch());
+
+        // Display boundary: the printed log line is masked.
+        $printed = $buffer->fetch();
+        $this->assertStringNotContainsString(self::SECRET, $printed);
+        $this->assertStringContainsString('***', $printed);
+
+        // Data boundary: TaskResult::message is data, not display, and keeps the
+        // raw value - the same contract ExecutionResult keeps for its output.
+        $this->assertStringContainsString(self::SECRET, (string) $result->message);
     }
 
     public function testExecutionResultKeepsTheRawValue(): void
