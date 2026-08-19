@@ -66,7 +66,7 @@ final class Kernel
         $contextManager = $this->container->getByType(ContextManager::class);
         $eventDispatcher = $this->container->getByType(EventDispatcherInterface::class);
         // Add core commands
-        $app->addCommand(new InitCommand());
+        $app->addCommand(new InitCommand($this->workingDir));
         $app->addCommand(new RunCommand($taskDiscovery, $taskRunner));
         // Add context commands
         $app->addCommand(new ContextListCommand($contextManager));
