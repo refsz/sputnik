@@ -172,6 +172,25 @@ final class VariableResolverSecretsTest extends TestCase
         $resolver->resolve('anything');
     }
 
+    public function testContextLevelDynamicsBlockIsAConfigurationError(): void
+    {
+        // resolve() only merges contexts.*.variables.constants, so a dynamics
+        // block there was ignored without a word - the same silent no-op the
+        // secrets guard exists to prevent.
+        $config = new Configuration([
+            'contexts' => [
+                'prod' => ['variables' => ['dynamics' => ['version' => ['type' => 'command', 'command' => 'cat VERSION']]]],
+            ],
+        ]);
+
+        $resolver = new VariableResolver($config, 'prod', sys_get_temp_dir(), new SecretRegistry());
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('dynamics');
+
+        $resolver->resolve('anything');
+    }
+
     public function testSecretNamedContextIsAConfigurationError(): void
     {
         $resolver = $this->resolver(['context' => 'literal']);

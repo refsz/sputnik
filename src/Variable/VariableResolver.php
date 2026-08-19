@@ -170,7 +170,7 @@ final class VariableResolver implements VariableResolverInterface
 
     private function declareSecrets(): void
     {
-        $this->assertNoContextLevelSecrets();
+        $this->assertOnlyConstantsAreContextOverridden();
 
         $definitions = $this->config->getSecrets();
 
@@ -223,23 +223,31 @@ final class VariableResolver implements VariableResolverInterface
     }
 
     /**
-     * Secrets are not context-overridable, matching dynamics. A
-     * `contexts.*.variables.secrets` block is silently ignored by resolve()
-     * otherwise - the name never matches a declared secret - so it must be
-     * rejected explicitly rather than left to resolve to nothing.
+     * Only constants are context-overridable. resolve() merges
+     * `contexts.*.variables.constants` and nothing else, so a secrets or
+     * dynamics block there is ignored without a word - the name never matches a
+     * declared one. Both must be rejected explicitly rather than left to resolve
+     * to nothing.
      */
-    private function assertNoContextLevelSecrets(): void
+    private function assertOnlyConstantsAreContextOverridden(): void
     {
         foreach ($this->config->getContexts() as $contextName => $context) {
             $variables = $context['variables'] ?? null;
 
-            // array_key_exists, not isset: an empty `secrets:` key is null in NEON
-            // and must be rejected just as loudly as a populated one.
-            if (\is_array($variables) && \array_key_exists('secrets', $variables)) {
-                throw new InvalidConfigException(\sprintf(
-                    "Context '%s' declares a 'variables.secrets' block, but secrets are not context-overridable",
-                    $contextName,
-                ));
+            if (!\is_array($variables)) {
+                continue;
+            }
+
+            foreach (['secrets', 'dynamics'] as $section) {
+                // array_key_exists, not isset: an empty `secrets:` key is null in
+                // NEON and must be rejected just as loudly as a populated one.
+                if (\array_key_exists($section, $variables)) {
+                    throw new InvalidConfigException(\sprintf(
+                        "Context '%s' declares a 'variables.%s' block, but only constants are context-overridable",
+                        $contextName,
+                        $section,
+                    ));
+                }
             }
         }
     }

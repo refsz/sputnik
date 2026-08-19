@@ -57,7 +57,10 @@ rejected here, at config load rather than at first access.
 A misspelled section name is rejected too, which matters more than it sounds: an
 unknown key under `variables` used to be accepted, so `secrests:` left every
 secret it declared resolving to `null` - nothing was masked because no value
-existed, and the task ran on with an empty argument and exited 0.
+existed, and the task ran on with an empty argument and exited 0. The same holds
+inside a context: only `constants` may be overridden there, and a `secrets` or
+`dynamics` block under `contexts.*.variables` is an error rather than a section
+that quietly does nothing.
 
 !!! note "`env` is a secret-only type"
     `variables.dynamics` does not accept `type: env` -- it allows `command`,

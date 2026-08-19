@@ -69,6 +69,11 @@ contexts:
                 appEnv: prod  # overrides when prod is active
 ```
 
+Only `constants` can be overridden per context. A `dynamics` or `secrets` block
+under `contexts.*.variables` is a configuration error, not a silent no-op --
+dynamics are evaluated once for the run, and a context-level secret could
+declassify a global one by shadowing its name.
+
 ## One-Shot Override
 
 Use `--context` to override the context for a single command without persisting:
