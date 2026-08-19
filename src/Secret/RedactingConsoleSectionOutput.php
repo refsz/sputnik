@@ -35,6 +35,7 @@ final class RedactingConsoleSectionOutput extends ConsoleSectionOutput
     /**
      * @param string|iterable<mixed> $messages
      */
+    #[\Override]
     public function write(string|iterable $messages, bool $newline = false, int $options = 0): void
     {
         parent::write($this->redactor->redactMessages($messages), $newline, $options);
@@ -43,6 +44,7 @@ final class RedactingConsoleSectionOutput extends ConsoleSectionOutput
     /**
      * @param string|iterable<mixed> $messages
      */
+    #[\Override]
     public function writeln(string|iterable $messages, int $options = 0): void
     {
         parent::writeln($this->redactor->redactMessages($messages), $options);
@@ -54,6 +56,7 @@ final class RedactingConsoleSectionOutput extends ConsoleSectionOutput
      *
      * @param string|iterable<mixed> $message
      */
+    #[\Override]
     public function overwrite(string|iterable $message): void
     {
         parent::overwrite($this->redactor->redactMessages($message));

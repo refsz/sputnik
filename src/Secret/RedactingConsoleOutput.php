@@ -27,16 +27,19 @@ final class RedactingConsoleOutput extends RedactingOutput implements ConsoleOut
         parent::__construct($console, $redactor);
     }
 
+    #[\Override]
     public function getErrorOutput(): OutputInterface
     {
         return new RedactingOutput($this->console->getErrorOutput(), $this->redactor());
     }
 
+    #[\Override]
     public function setErrorOutput(OutputInterface $error): void
     {
         $this->console->setErrorOutput($error);
     }
 
+    #[\Override]
     public function section(): ConsoleSectionOutput
     {
         if (!$this->console instanceof StreamOutput) {
