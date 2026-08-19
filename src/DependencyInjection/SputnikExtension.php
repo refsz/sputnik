@@ -14,6 +14,7 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Sputnik\Config\Configuration;
+use Sputnik\Console\OutputChannel;
 use Sputnik\Context\ContextManager;
 use Sputnik\Environment\EnvironmentDetector;
 use Sputnik\Event\ContextSwitchedEvent;
@@ -65,9 +66,16 @@ final class SputnikExtension extends CompilerExtension
             ->setFactory(NullLogger::class)
             ->setAutowired(true);
 
+        // Output Channel - filled once a command runs, shared by everything that writes
+        $builder->addDefinition($this->prefix('outputChannel'))
+            ->setFactory(OutputChannel::class)
+            ->setAutowired(true);
+
         // Shell Executor
         $builder->addDefinition($this->prefix('shellExecutor'))
-            ->setFactory(ShellExecutor::class)
+            ->setFactory(ShellExecutor::class, [
+                'channel' => $this->prefix('@outputChannel'),
+            ])
             ->setAutowired(true);
 
         // Context Manager
@@ -163,6 +171,8 @@ final class SputnikExtension extends CompilerExtension
                 'contextName' => $params['contextName'],
                 'environmentDetector' => $this->prefix('@environmentDetector'),
                 'secrets' => $this->prefix('@secretRegistry'),
+                'shellExecutor' => $this->prefix('@shellExecutor'),
+                'outputChannel' => $this->prefix('@outputChannel'),
             ])
             ->setAutowired(true);
 
