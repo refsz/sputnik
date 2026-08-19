@@ -42,11 +42,41 @@ final class ResetOnContextSwitch
 
     public function __invoke(ContextSwitchedEvent $event): void
     {
-        $this->executor->execute('composer install --no-interaction');
+        $this->executor->execute(['composer', 'install', '--no-interaction']);
         // Automatically wrapped with docker exec on host, runs directly in container
     }
 }
 ```
+
+The command is echoed and its output streams to the console, exactly as it does
+inside a task, and secret values are masked on the way out.
+
+## Writing Output
+
+Inject `OutputChannel` to write from a listener. It is the same destination
+tasks write to, so masking applies -- `echo` and `print` bypass it and can leak
+a secret:
+
+```php
+use Sputnik\Console\OutputChannel;
+
+#[AsListener(event: ContextSwitchedEvent::class)]
+final class AnnounceSwitch
+{
+    public function __construct(
+        private readonly OutputChannel $output,
+    ) {}
+
+    public function __invoke(ContextSwitchedEvent $event): void
+    {
+        $this->output->writeln('Switched to ' . $event->newContext);
+        $this->output->comment('Remember to rebuild assets');
+    }
+}
+```
+
+A listener that runs before a command has produced output -- during
+`ConfigLoadedEvent`, for example -- writes nowhere rather than failing.
 
 ## Available Events
 
