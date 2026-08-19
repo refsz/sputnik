@@ -201,6 +201,8 @@ $ctx->exec(['make', 'build'], [
 ]);
 ```
 
+- `cwd` -- directory to run in (default: the project root). Prefer this over
+  `shell('cd sub && ...')`, which puts the command back through a shell
 - `env` -- additional environment variables for the process
 - `tty` -- allocate a TTY (disables timeout automatically)
 - `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; `tty: true` removes the limit.
