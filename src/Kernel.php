@@ -20,6 +20,7 @@ use Sputnik\Environment\EnvironmentDetector;
 use Sputnik\Event\ConfigLoadedEvent;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 use Sputnik\Secret\SecretRedactor;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateEngine;
@@ -123,6 +124,11 @@ final class Kernel
     public function getSecretRedactor(): SecretRedactor
     {
         return $this->container->getByType(SecretRedactor::class);
+    }
+
+    public function getSecretRegistry(): SecretRegistry
+    {
+        return $this->container->getByType(SecretRegistry::class);
     }
 
     public function getEventDispatcher(): EventDispatcherInterface

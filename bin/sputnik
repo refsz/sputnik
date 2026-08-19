@@ -87,6 +87,12 @@ try {
         if ($persistedContext !== $contextOverride) {
             $kernel->getTemplateEngine()->switchContext($persistedContext);
             $kernel->getTemplateEngine()->renderAll(force: true);
+
+            // This render runs outside any TaskRunner::run() call, so nothing
+            // else drains a secret that failed to resolve while rendering.
+            foreach ($kernel->getSecretRegistry()->takeDiagnostics() as $diagnostic) {
+                $output->writeln('<comment>' . $diagnostic . '</comment>');
+            }
         }
     }
 

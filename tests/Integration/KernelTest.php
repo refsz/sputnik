@@ -10,6 +10,7 @@ use Sputnik\Console\Application;
 use Sputnik\Context\ContextManager;
 use Sputnik\Event\ConfigLoadedEvent;
 use Sputnik\Kernel;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateEngine;
@@ -118,6 +119,15 @@ NEON;
         $engine = $kernel->getTemplateEngine();
 
         $this->assertInstanceOf(TemplateEngine::class, $engine);
+    }
+
+    public function testKernelProvidesSecretRegistry(): void
+    {
+        $kernel = new Kernel(workingDir: $this->tempDir);
+
+        $registry = $kernel->getSecretRegistry();
+
+        $this->assertInstanceOf(SecretRegistry::class, $registry);
     }
 
     public function testKernelProvidesEventDispatcher(): void
