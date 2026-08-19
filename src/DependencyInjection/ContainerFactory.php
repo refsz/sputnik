@@ -39,10 +39,34 @@ final class ContainerFactory
 
                 return null;
             },
-            [$this->config->all(), $this->contextName, $this->workingDir, $this->getTaskFilesHash(), Application::VERSION],
+            [
+                $this->config->all(),
+                $this->contextName,
+                $this->workingDir,
+                $this->getTaskFilesHash(),
+                Application::VERSION,
+                $this->getServiceDefinitionsFingerprint(),
+            ],
         );
 
         return new $containerClass();
+    }
+
+    /**
+     * Fingerprint the service graph itself, so a change to what the container
+     * wires up invalidates the cache even when Application::VERSION is the
+     * unresolved `@package_version@` placeholder (true for any non-PHAR run).
+     */
+    private function getServiceDefinitionsFingerprint(): string
+    {
+        $path = __DIR__ . '/SputnikExtension.php';
+        $hash = md5_file($path);
+
+        if ($hash === false) {
+            throw new SputnikRuntimeException('Could not read service definitions file: ' . $path);
+        }
+
+        return $hash;
     }
 
     /**
