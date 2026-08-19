@@ -163,8 +163,14 @@ error.
     streams.
 
     A secret shorter than eight characters is masked at word boundaries, so
-    unrelated output may be masked too. Sputnik warns about this once per
+    unrelated output may be masked too — and, in the other direction, an
+    occurrence inside a longer word is not masked at all: a four-character PIN
+    inside `user_1234` survives. Sputnik warns about the short value once per
     secret, visible with `-v`.
+
+    A literal secret written into the config file is compiled verbatim into
+    `.sputnik/cache`, which is one more reason to use `pass`, `op` or the
+    environment instead.
 
 ## Context Overrides
 
