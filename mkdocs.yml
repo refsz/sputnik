@@ -41,6 +41,7 @@ nav:
       - Writing Tasks: tasks.md
       - Configuration: configuration.md
       - Variables: variables.md
+      - Secrets: secrets.md
       - Templates: templates.md
       - Contexts: contexts.md
       - Event Listeners: listeners.md

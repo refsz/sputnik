@@ -131,7 +131,7 @@ variables:
             command: "pass show project/api"
 ```
 
-See [Secrets](variables.md#secrets) for the exact guarantee and its limits.
+See [Secrets](secrets.md) for the exact guarantee and its limits.
 
 ---
 

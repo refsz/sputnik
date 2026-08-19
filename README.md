@@ -19,7 +19,7 @@ final class DeployTask implements TaskInterface
     public function __invoke(TaskContext $ctx): TaskResult
     {
         $ctx->shell('rsync -avz ./dist/ {{ deployPath }}/');
-        $ctx->shellRaw('php artisan migrate --force');
+        $ctx->exec(['php', 'artisan', 'migrate', '--force']);
 
         return TaskResult::success();
     }
@@ -29,7 +29,7 @@ final class DeployTask implements TaskInterface
 ```
 $ php sputnik.phar deploy
 
-Sputnik 0.1.0 │ .sputnik.dist.neon │ prod
+🛰  Sputnik v0.2.0 │ .sputnik.dist.neon │ prod
 
 ▸ deploy · Deploy the application
 
@@ -64,6 +64,8 @@ For IDE autocompletion you can additionally install via Composer: `composer requ
 **Contexts** let you define named configurations -- different variables, different behavior. Switch with one command, no code changes. [Contexts](https://refsz.github.io/sputnik/contexts/)
 
 **Templates** render files like `.env` with `{{ variable }}` syntax. Re-rendered automatically on context switch. [Templates](https://refsz.github.io/sputnik/templates/)
+
+**Secrets** are variables Sputnik refuses to print. Declare one under `variables.secrets` and every value it takes is replaced with `***` at the display boundary -- echoed commands, streamed output, log lines. [Secrets](https://refsz.github.io/sputnik/secrets/)
 
 **Environments** route commands transparently between host and container. A task marked `environment: 'container'` is automatically wrapped with your Docker executor. [Environments](https://refsz.github.io/sputnik/environments/)
 
