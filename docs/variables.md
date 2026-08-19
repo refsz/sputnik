@@ -156,6 +156,12 @@ error.
     masked. Sputnik itself never creates one, so this only matters to code that
     deliberately does.
 
+    A command run with `['tty' => true]` inherits the terminal's descriptors
+    directly, so its output never passes through PHP and is not masked — only
+    the echoed command line is. Separately, a value split across two reads of
+    the output stream is not matched, since redaction runs per chunk as it
+    streams.
+
     A secret shorter than eight characters is masked at word boundaries, so
     unrelated output may be masked too. Sputnik warns about this once per
     secret, visible with `-v`.
