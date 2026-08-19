@@ -10,6 +10,7 @@ use Nette\DI\ContainerLoader;
 use Sputnik\Config\Configuration;
 use Sputnik\Console\Application;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
+use Sputnik\Support\SourceFingerprint;
 
 final class ContainerFactory
 {
@@ -39,10 +40,28 @@ final class ContainerFactory
 
                 return null;
             },
-            [$this->config->all(), $this->contextName, $this->workingDir, $this->getTaskFilesHash(), Application::VERSION],
+            [
+                $this->config->all(),
+                $this->contextName,
+                $this->workingDir,
+                $this->getTaskFilesHash(),
+                Application::VERSION,
+                $this->getServiceDefinitionsFingerprint(),
+            ],
         );
 
         return new $containerClass();
+    }
+
+    /**
+     * Fingerprint Sputnik's own sources, so any change to the service graph or
+     * to a wired class invalidates the cache even when Application::VERSION is
+     * the unresolved `@package_version@` placeholder, which it is on every
+     * non-PHAR run.
+     */
+    private function getServiceDefinitionsFingerprint(): string
+    {
+        return SourceFingerprint::ofDirectory(\dirname(__DIR__));
     }
 
     /**

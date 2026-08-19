@@ -105,6 +105,74 @@ buildInfo:
 
 Returns an associative array with the result of each named provider.
 
+## Secrets
+
+Variables that must never appear in output are declared under `secrets`:
+
+```neon
+variables:
+    secrets:
+        apiToken:
+            type: command
+            command: "pass show project/api"
+
+        dbPassword:
+            type: env
+            name: DB_PASSWORD
+```
+
+Declaring a variable here does two things: it defines how the value is obtained,
+and it marks the value as sensitive. Everything Sputnik prints — the echoed
+command, streamed command output, failure messages, log lines and
+`$ctx->writeln()` — has the value replaced with `***`.
+
+Supported types are `command`, `script` and `env`. A plain scalar is a literal
+value; it works, but a secret does not belong in a committed config file. `git`
+and `system` are rejected here.
+
+Secrets resolve lazily, on first access of that name, so a `pass` or `op` lookup
+does not prompt for tasks that never use the secret.
+
+`-D apiToken=xyz` overrides the value and keeps the masking.
+
+A name declared both here and under `constants` or `dynamics` is a configuration
+error.
+
+!!! warning "What masking does not cover"
+    `ExecutionResult` keeps raw output and the raw command, so a task can still
+    parse them — and can still leak them with `echo` or `file_put_contents()`,
+    which bypass Sputnik's output. `TaskResult` message keeps the raw failure
+    message value for the same reason. Rendered template files contain the real
+    value by design, and `ps aux` shows the real command line: pass a secret via
+    `$ctx->shell($cmd, ['env' => [...]])` if that matters.
+
+    An error raised before Sputnik's container is built cannot be masked, because
+    no secret is known at that moment. A configuration parse error that quotes a
+    line holding a literal secret is the case where that shows, which is one more
+    reason to point at `pass`, `op` or the environment instead of writing a
+    literal into the config file.
+
+    A command run with `['tty' => true]` inherits the terminal's descriptors
+    directly, so its output never passes through PHP and is not masked — only
+    the echoed command line is. Separately, a value split across two reads of
+    the output stream is not matched, since redaction runs per chunk as it
+    streams.
+
+    A secret shorter than eight characters is masked at word boundaries, so
+    unrelated output may be masked too — and, in the other direction, an
+    occurrence inside a longer word is not masked at all: a four-character PIN
+    inside `user_1234` survives. Sputnik warns about the short value once per
+    secret, visible with `-v`.
+
+    A multi-line value is masked line by line as well as whole, because streamed
+    output is indented before it is written. That means a short line inside a
+    long secret — an alias or a PIN on its own line — brings the word-boundary
+    behaviour above with it, and triggers the same warning.
+
+    A literal secret written into the config file is compiled verbatim into
+    `.sputnik/cache`, which is one more reason to use `pass`, `op` or the
+    environment instead.
+
 ## Context Overrides
 
 ```neon

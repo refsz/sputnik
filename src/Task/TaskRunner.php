@@ -17,6 +17,7 @@ use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\ShouldNotHappenException;
 use Sputnik\Executor\EnvironmentAwareExecutor;
 use Sputnik\Executor\ShellExecutor;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Template\TemplateConfig;
 use Sputnik\Template\TemplateEngine;
 use Sputnik\Variable\VariableResolverInterface;
@@ -39,6 +40,7 @@ final class TaskRunner implements TaskRunnerInterface
         private readonly string $workingDir,
         private readonly string $contextName = 'local',
         private readonly ?EnvironmentDetector $environmentDetector = null,
+        private readonly SecretRegistry $secrets = new SecretRegistry(),
     ) {
         $this->optionCoercer = new OptionCoercer();
     }
@@ -81,6 +83,12 @@ final class TaskRunner implements TaskRunnerInterface
             $this->eventDispatcher->dispatch($beforeEvent);
 
             if ($beforeEvent->isCancelled()) {
+                // renderTemplates() above already ran and may have queued
+                // diagnostics for a secret that failed to resolve during
+                // rendering - drain them here too, not just on the success
+                // and failure paths below.
+                $this->reportSecretDiagnostics($logger);
+
                 return TaskResult::skipped($beforeEvent->getCancelReason() ?? 'Cancelled by listener');
             }
 
@@ -109,11 +117,15 @@ final class TaskRunner implements TaskRunnerInterface
 
             $this->eventDispatcher->dispatch(new AfterTaskEvent($metadata, $result, $duration));
 
+            $this->reportSecretDiagnostics($logger);
+
             return $result->withDuration($duration);
         } catch (\Throwable $throwable) {
             $duration = microtime(true) - $startTime;
             $logger->error('Task failed: ' . $throwable->getMessage());
             $this->eventDispatcher->dispatch(new TaskFailedEvent($metadata, $throwable));
+
+            $this->reportSecretDiagnostics($logger);
 
             return TaskResult::failure($throwable->getMessage())->withDuration($duration);
         }
@@ -122,6 +134,13 @@ final class TaskRunner implements TaskRunnerInterface
     public function getContextName(): string
     {
         return $this->contextName;
+    }
+
+    private function reportSecretDiagnostics(LoggerInterface $logger): void
+    {
+        foreach ($this->secrets->takeDiagnostics() as $message) {
+            $logger->warning($message);
+        }
     }
 
     /**

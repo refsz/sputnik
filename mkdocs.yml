@@ -4,6 +4,9 @@ site_url: https://refsz.github.io/sputnik
 repo_url: https://github.com/refsz/sputnik
 repo_name: refsz/sputnik
 
+exclude_docs: |
+  superpowers/
+
 theme:
   name: material
   palette:

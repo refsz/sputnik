@@ -187,6 +187,18 @@ final class Configuration
     }
 
     /**
+     * Get secret variable configurations.
+     *
+     * @return array<string, mixed>
+     */
+    public function getSecrets(): array
+    {
+        // NEON parses an empty `secrets:` block to null, not an absent key, so
+        // the [] default above never applies to it - fold null in explicitly.
+        return $this->get('variables.secrets', []) ?? [];
+    }
+
+    /**
      * Get the default context name.
      */
     public function getDefaultContext(): string

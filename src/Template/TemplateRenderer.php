@@ -72,6 +72,9 @@ final class TemplateRenderer
 
     /**
      * Check if a template can be rendered (all required variables are available).
+     *
+     * Resolving is part of answering: a declared secret's definition runs,
+     * exactly as it would during rendering.
      */
     public function canRender(string $template): bool
     {
@@ -80,6 +83,9 @@ final class TemplateRenderer
 
     /**
      * Get missing required variables from a template.
+     *
+     * Resolving is part of answering: a declared secret's definition runs,
+     * exactly as it would during rendering.
      *
      * @return list<string>
      */

@@ -286,6 +286,43 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('local', $result->getOutput());
     }
 
+    public function testContextOverrideRerendersTemplatesBackAfterTheRun(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            contexts:
+                production:
+                    description: Production
+
+            templates:
+                env:
+                    src: templates/.env.dist
+                    dist: .env
+            NEON);
+        $this->writeTask('noop', <<<'PHP'
+            #[Task(name: 'noop', description: 'Does nothing')]
+            final class NoopTask implements TaskInterface
+            {
+                public function __invoke(TaskContext $ctx): TaskResult
+                {
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+        mkdir($this->tempDir . '/templates', 0755, true);
+        file_put_contents($this->tempDir . '/templates/.env.dist', 'CTX={{ context }}');
+
+        $result = $this->sputnik(['--context', 'production', 'noop'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        // The run rendered with the override, but the override is one-shot:
+        // afterwards the template must reflect the persisted context again.
+        $this->assertSame('CTX=local', file_get_contents($this->tempDir . '/.env'));
+    }
+
     // ── Error handling ──────────────────────────────────────────
 
     public function testInvalidConfigShowsCleanError(): void
@@ -555,6 +592,76 @@ final class SputnikBinaryTest extends TestCase
 
         $this->assertNotSame(0, $result->getExitCode());
         $this->assertStringContainsString('executor', $result->getOutput());
+    }
+
+    // ── Secret masking ──────────────────────────────────────────
+
+    public function testSecretIsMaskedInOutput(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            variables:
+                secrets:
+                    apiToken: ghp_abcdefghij
+            NEON);
+
+        $this->writeTask('leaky', <<<'PHP'
+            #[Task(name: 'leaky', description: 'Prints a secret')]
+            final class LeakyTask implements TaskInterface
+            {
+                public function __invoke(TaskContext $ctx): TaskResult
+                {
+                    $ctx->shell('echo {{! apiToken }}');
+
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['leaky'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringNotContainsString('ghp_abcdefghij', $result->getOutput());
+        $this->assertStringNotContainsString('ghp_abcdefghij', $result->getErrorOutput());
+        $this->assertStringContainsString('***', $result->getOutput());
+    }
+
+    public function testFailingCommandWithSecretIsMaskedOnBothChannels(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            variables:
+                secrets:
+                    apiToken: ghp_abcdefghij
+            NEON);
+
+        $this->writeTask('leaky', <<<'PHP'
+            #[Task(name: 'leaky', description: 'Fails while carrying a secret')]
+            final class LeakyTask implements TaskInterface
+            {
+                public function __invoke(TaskContext $ctx): TaskResult
+                {
+                    $ctx->shell('echo {{! apiToken }} >&2 && exit 7')->assertSuccess();
+
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['leaky'], $this->tempDir);
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $output = $result->getOutput();
+        $errorOutput = $result->getErrorOutput();
+        $this->assertStringNotContainsString('ghp_abcdefghij', $output);
+        $this->assertStringNotContainsString('ghp_abcdefghij', $errorOutput);
+        $this->assertStringContainsString('***', $output . $errorOutput);
     }
 
     // ── Helpers ─────────────────────────────────────────────────

@@ -28,6 +28,7 @@ final class DynamicVariableResolver
             'script' => $this->resolveScript($definition),
             'system' => $this->resolveSystem($definition),
             'composite' => $this->resolveComposite($definition),
+            'env' => $this->resolveEnv($definition),
             default => null,
         };
     }
@@ -123,6 +124,22 @@ final class DynamicVariableResolver
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed> $definition
+     */
+    private function resolveEnv(array $definition): ?string
+    {
+        $name = $definition['name'] ?? null;
+
+        if (!\is_string($name)) {
+            return null;
+        }
+
+        $value = getenv($name);
+
+        return $value === false ? null : $value;
     }
 
     /**

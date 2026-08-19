@@ -179,4 +179,37 @@ final class ConfigurationTest extends TestCase
 
         $this->assertSame('local', $config->getDefaultContext());
     }
+
+    public function testGetSecretsReturnsTheSection(): void
+    {
+        $config = new Configuration([
+            'variables' => [
+                'secrets' => [
+                    'apiToken' => ['type' => 'command', 'command' => 'pass show x'],
+                    'legacyKey' => 'literal',
+                ],
+            ],
+        ]);
+
+        $this->assertSame(
+            [
+                'apiToken' => ['type' => 'command', 'command' => 'pass show x'],
+                'legacyKey' => 'literal',
+            ],
+            $config->getSecrets(),
+        );
+    }
+
+    public function testGetSecretsDefaultsToEmpty(): void
+    {
+        $this->assertSame([], (new Configuration([]))->getSecrets());
+    }
+
+    public function testGetSecretsTreatsAnEmptyBlockAsEmpty(): void
+    {
+        // NEON parses an empty `secrets:` key to null, not an empty array.
+        $config = new Configuration(['variables' => ['secrets' => null]]);
+
+        $this->assertSame([], $config->getSecrets());
+    }
 }
