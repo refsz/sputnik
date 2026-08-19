@@ -39,17 +39,28 @@ DEBUG={{ debug | "false" }}
 LOG_LEVEL={{ logLevel | 'info' }}
 ```
 
-**Required variable (fails if missing or null):**
+**Deliberately empty:**
 ```
-API_KEY={{! apiKey }}
+EXTRA_HOSTS={{ extraHosts | "" }}
 ```
 
-!!! warning
-    If a required variable is not defined, template rendering will fail with an error. The task will not execute.
+!!! warning "Every variable must resolve"
+    `{{ name }}` fails if the variable is missing or `null` -- rendering stops
+    and the task does not execute. An empty result has to be asked for, with
+    `{{ name | "" }}`.
+
+    This is deliberate. A silently empty substitution turned
+    `rm -rf {{ deployPath }}/` into `rm -rf /` and reported success, and the same
+    typo in a template produced a config file with a blank value that looked
+    fine. A misspelled variable name is now an error that names the variable and
+    the file.
+
+The `{{! name }}` marker still parses and still means required. It is redundant
+now, since that is what the plain form does.
 
 A variable that resolves to `null` counts as not defined: `{{ name | "default" }}`
-then falls back to the default, and `{{! name }}` fails. An empty string is a
-value and is rendered as such.
+falls back to the default, `{{ name }}` fails. An empty string is a value and is
+rendered as such.
 
 **Escape literal braces:**
 ```

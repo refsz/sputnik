@@ -142,9 +142,23 @@ final class TaskContextShellInterpolationTest extends TestCase
         $this->assertSame('echo {{ NOT_A_VARIABLE }}', $executed[0]['command']);
     }
 
-    public function testMissingOptionalVariableBecomesEmptyArgument(): void
+    public function testMissingVariableThrowsAndRunsNothing(): void
     {
-        $this->ctx->shell('echo {{ MISSING }}');
+        // This used to become `echo ''`, which is how `rm -rf {{ path }}/`
+        // turned into `rm -rf /` and reported success.
+        try {
+            $this->ctx->shell('echo {{ MISSING }}');
+            self::fail('Expected MissingVariableException');
+        } catch (MissingVariableException $e) {
+            $this->assertSame(['MISSING'], $e->variables);
+        }
+
+        $this->assertSame([], $this->executor->getExecutedCommands());
+    }
+
+    public function testAnExplicitEmptyDefaultStillBecomesAnEmptyArgument(): void
+    {
+        $this->ctx->shell('echo {{ MISSING | "" }}');
 
         $executed = $this->executor->getExecutedCommands();
         $this->assertSame("echo ''", $executed[0]['command']);

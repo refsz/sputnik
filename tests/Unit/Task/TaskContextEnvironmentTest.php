@@ -78,6 +78,7 @@ final class TaskContextEnvironmentTest extends TestCase
         $executor = new EnvironmentAwareExecutor($inner, $detector, 'container');
 
         $variables = $this->createMock(VariableResolverInterface::class);
+        $variables->method('has')->willReturn(true);
         $variables->method('resolve')->willReturn('test_value');
 
         $ctx = $this->createContext($executor, $variables);

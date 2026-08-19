@@ -125,7 +125,7 @@ $ctx->get('varName', 'default'); // with fallback default
 ### Template Strings
 
 `render()` substitutes variables in any string, with the same syntax a template
-file uses -- `{{ name }}`, `{{! required }}`, `{{ name | "default" }}`.
+file uses -- `{{ name }}`, `{{ name | "default" }}`, `{{ name | "" }}`.
 
 The renderer comes from the template engine, so a string renders exactly like a
 template file would: same parser, same variables. On top of that it sees the
@@ -137,9 +137,9 @@ $content = $ctx->render(file_get_contents('templates/config.yaml'));
 file_put_contents('.ddev/config.yaml', $content);
 ```
 
-Values are inserted verbatim, nothing is escaped -- unlike `shell()`. A missing
-`{{! required }}` variable throws `MissingVariableException`, a missing optional
-one renders as an empty string.
+Values are inserted verbatim, nothing is escaped -- unlike `shell()`. A variable
+that does not resolve throws `MissingVariableException` and nothing is rendered;
+write `{{ name | "" }}` when an empty value is what you want.
 
 Use it when a task has to produce file content itself, for example when it wipes
 a directory that configured templates were rendered into and has to put them
@@ -171,11 +171,13 @@ Prefer `exec()`. It is the safe default: a command that needs no shell feature
 cannot be broken by one.
 
 `shell()` uses the same template syntax as `render()` and template files, so
-`{{! required }}` and `{{ name | "default" }}` work in commands too, and
-`\{\{ ... \}\}` stays literal. A missing `{{! required }}` variable throws
-`MissingVariableException` and the command is not executed. A missing optional
-variable becomes an empty, quoted argument (`''`), so it keeps its position in
-the command instead of disappearing.
+`{{ name | "default" }}` works in commands too and `\{\{ ... \}\}` stays literal.
+
+A variable that does not resolve throws `MissingVariableException` and **the
+command is not executed**. This matters most here: an empty substitution used to
+turn `rm -rf {{ deployPath }}/` into `rm -rf /` with exit code 0. Write
+`{{ name | "" }}` for an argument that may legitimately be empty -- it becomes
+`''` and keeps its position in the command.
 
 !!! warning "Commands with their own `{{ }}` syntax"
     Go templates in `docker` and `kubectl` share the delimiters. `{{.State.Running}}`

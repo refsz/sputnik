@@ -24,6 +24,10 @@ final class MissingVariableException extends SputnikException
             $message .= ' in template: ' . $templatePath;
         }
 
+        // Naming the escape hatch in the message is what makes this cheap to
+        // migrate: the alternative is hunting for the syntax in the docs.
+        $message .= \sprintf(' (use {{ %s | "" }} if an empty value is intended)', $variables[0] ?? 'name');
+
         parent::__construct($message);
     }
 
