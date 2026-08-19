@@ -4,12 +4,32 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 10
     labels:
       - dependencies
+    groups:
+      dev-tools:
+        applies-to: version-updates
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      runtime:
+        applies-to: version-updates
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
     labels:
       - dependencies
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns:
+          - "*"
