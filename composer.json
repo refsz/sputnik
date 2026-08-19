@@ -16,7 +16,7 @@
         "source": "https://github.com/refsz/sputnik"
     },
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "nette/di": "^3.2",
         "nette/neon": "^3.4",
         "symfony/console": "^7.0",
@@ -52,7 +52,7 @@
         "sort-packages": true,
         "optimize-autoloader": true,
         "platform": {
-            "php": "8.2.0"
+            "php": "8.3.0"
         }
     },
     "minimum-stability": "stable",
