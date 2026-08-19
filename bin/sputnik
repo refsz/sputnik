@@ -79,12 +79,18 @@ try {
     $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride);
     $output = new Sputnik\Secret\RedactingConsoleOutput($output, $kernel->getSecretRedactor());
     $app = $kernel->createApplication($output);
+    // Symfony's default autoExit would call exit() inside run(), so the
+    // one-shot context re-render below would never execute.
+    $app->setAutoExit(false);
     $exitCode = $app->run(null, $output);
 
     // Re-render templates with the persisted context if --context was a one-shot override
     if ($contextOverride !== null) {
         $persistedContext = $kernel->getContextManager()->getCurrentContext();
         if ($persistedContext !== $contextOverride) {
+            // The resolver must switch too, or {{ context }} and every
+            // context-level constant still render with the override.
+            $kernel->getVariableResolver()->switchContext($persistedContext);
             $kernel->getTemplateEngine()->switchContext($persistedContext);
             $kernel->getTemplateEngine()->renderAll(force: true);
 
