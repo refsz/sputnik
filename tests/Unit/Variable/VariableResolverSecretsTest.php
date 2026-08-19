@@ -154,6 +154,16 @@ final class VariableResolverSecretsTest extends TestCase
         $resolver->resolve('context');
     }
 
+    public function testSecretNameContainingADotIsAConfigurationError(): void
+    {
+        $resolver = $this->resolver(['api.token' => 'literal']);
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('api.token');
+
+        $resolver->resolve('anything');
+    }
+
     public function testUnsupportedSecretTypeIsAConfigurationError(): void
     {
         $resolver = $this->resolver(['branch' => ['type' => 'git', 'property' => 'branch']]);

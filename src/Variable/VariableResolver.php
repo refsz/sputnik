@@ -182,6 +182,16 @@ final class VariableResolver implements VariableResolverInterface
                 ));
             }
 
+            // Lookup splits a variable name on the first dot to find a nested
+            // path, so a secret literally named with a dot could never be
+            // resolved or masked once declared - reject it up front instead.
+            if (str_contains($name, '.')) {
+                throw new InvalidConfigException(\sprintf(
+                    "Secret name '%s' is not valid: secret names are flat and cannot contain '.'",
+                    $name,
+                ));
+            }
+
             $this->assertSupportedSecretType($name, $definitions[$name]);
         }
 
