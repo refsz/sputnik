@@ -135,7 +135,11 @@ final class SecretRegistry
         $candidates = [$text];
 
         foreach (explode("\n", $text) as $line) {
-            if ($line !== '') {
+            // A whitespace-only line (e.g. an indentation-only line inside a
+            // multi-line secret) is not a value worth masking on its own -
+            // registering it would turn every run of that whitespace in
+            // unrelated output into a redaction.
+            if (trim($line) !== '') {
                 $candidates[] = $line;
             }
         }

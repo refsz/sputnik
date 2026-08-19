@@ -175,4 +175,14 @@ final class SecretRegistryTest extends TestCase
         $this->assertSame(['ghp_abcdefghij'], $this->registry->values());
         $this->assertSame([], $this->registry->takeDiagnostics());
     }
+
+    public function testMultiLineValueWithAWhitespaceOnlyLineDoesNotRegisterThatLine(): void
+    {
+        $this->registry->remember('apiToken', "lineA\n  \nlineB");
+
+        $this->assertSame(
+            ["lineA\n  \nlineB", 'lineA', 'lineB'],
+            $this->registry->values(),
+        );
+    }
 }

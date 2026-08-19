@@ -137,4 +137,11 @@ final class SecretRedactorTest extends TestCase
             $this->redactor->redact('Authorization: Bearer ghp_abcdefghij'),
         );
     }
+
+    public function testWhitespaceOnlyLineOfAMultiLineSecretIsNeverRegisteredAsAValue(): void
+    {
+        $this->registry->remember('apiToken', "lineA\n  \nlineB");
+
+        $this->assertSame('a,  ,b', $this->redactor->redact('a,  ,b'));
+    }
 }
