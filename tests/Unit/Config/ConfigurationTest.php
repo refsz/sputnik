@@ -204,4 +204,12 @@ final class ConfigurationTest extends TestCase
     {
         $this->assertSame([], (new Configuration([]))->getSecrets());
     }
+
+    public function testGetSecretsTreatsAnEmptyBlockAsEmpty(): void
+    {
+        // NEON parses an empty `secrets:` key to null, not an empty array.
+        $config = new Configuration(['variables' => ['secrets' => null]]);
+
+        $this->assertSame([], $config->getSecrets());
+    }
 }

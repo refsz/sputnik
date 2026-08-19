@@ -193,7 +193,9 @@ final class Configuration
      */
     public function getSecrets(): array
     {
-        return $this->get('variables.secrets', []);
+        // NEON parses an empty `secrets:` block to null, not an absent key, so
+        // the [] default above never applies to it - fold null in explicitly.
+        return $this->get('variables.secrets', []) ?? [];
     }
 
     /**
