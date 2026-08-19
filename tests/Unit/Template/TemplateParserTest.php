@@ -36,7 +36,8 @@ final class TemplateParserTest extends TestCase
 
         $this->assertSame(TokenType::Variable, $tokens[1]->type);
         $this->assertSame('name', $tokens[1]->value);
-        $this->assertFalse($tokens[1]->isRequired());
+        // No default, so the value has to be there: the plain form is required.
+        $this->assertTrue($tokens[1]->isRequired());
 
         $this->assertSame(TokenType::Text, $tokens[2]->type);
         $this->assertSame('!', $tokens[2]->value);
@@ -130,12 +131,16 @@ final class TemplateParserTest extends TestCase
     public function testExtractRequiredVariables(): void
     {
         $variables = $this->parser->extractRequiredVariables(
-            '{{ optional }} {{! required }} {{ withDefault | "default" }} {{! alsoRequired }}',
+            '{{ plain }} {{! marked }} {{ withDefault | "default" }} {{ alsoPlain }}',
         );
 
-        $this->assertCount(2, $variables);
-        $this->assertContains('required', $variables);
-        $this->assertContains('alsoRequired', $variables);
+        // Everything without a default is required, marker or not. Only a
+        // declared default makes a variable optional.
+        $this->assertCount(3, $variables);
+        $this->assertContains('plain', $variables);
+        $this->assertContains('marked', $variables);
+        $this->assertContains('alsoPlain', $variables);
+        $this->assertNotContains('withDefault', $variables);
     }
 
     public function testExtractRequiredVariablesExcludesThoseWithDefaults(): void

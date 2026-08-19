@@ -27,9 +27,17 @@ final class Token
         return $this->type === TokenType::Variable || $this->type === TokenType::RequiredVariable;
     }
 
+    /**
+     * A variable must resolve unless the template says what to use instead. A
+     * silently empty substitution is how `rm -rf {{ deployPath }}/` became
+     * `rm -rf /`: the typo produced an empty argument and the command reported
+     * success. Ask for emptiness explicitly with `{{ name | "" }}`.
+     *
+     * The `{{! name }}` marker stays accepted, and is now redundant.
+     */
     public function isRequired(): bool
     {
-        return $this->type === TokenType::RequiredVariable;
+        return $this->isVariable() && !$this->hasDefault();
     }
 
     public function hasDefault(): bool

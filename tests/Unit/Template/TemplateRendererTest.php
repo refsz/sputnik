@@ -93,11 +93,30 @@ final class TemplateRendererTest extends TestCase
         $this->assertSame('3306', $result);
     }
 
-    public function testOptionalVariableMissingRendersEmpty(): void
+    public function testMissingVariableWithoutADefaultThrows(): void
     {
-        $result = $this->renderer->render('Value: {{ missing }}');
+        // A silently empty substitution turned `rm -rf {{ deployPath }}/` into
+        // `rm -rf /`. A variable must resolve unless the template says what to
+        // use instead.
+        try {
+            $this->renderer->render('Value: {{ missing }}');
+            $this->fail('Expected MissingVariableException');
+        } catch (MissingVariableException $e) {
+            $this->assertSame(['missing'], $e->variables);
+        }
+    }
 
-        $this->assertSame('Value: ', $result);
+    public function testAnExplicitEmptyDefaultIsHowYouAskForEmpty(): void
+    {
+        $this->assertSame('Value: ', $this->renderer->render('Value: {{ missing | "" }}'));
+        $this->assertSame('Value: ', $this->renderer->render("Value: {{ missing | '' }}"));
+    }
+
+    public function testTheRequiredMarkerStaysAcceptedAsASynonym(): void
+    {
+        $this->variables->set('name', 'x');
+
+        $this->assertSame('x', $this->renderer->render('{{! name }}'));
     }
 
     public function testRendersBooleanTrue(): void

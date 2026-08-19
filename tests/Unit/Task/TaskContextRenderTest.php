@@ -65,9 +65,16 @@ final class TaskContextRenderTest extends TestCase
         );
     }
 
-    public function testMissingOptionalVariableRendersEmpty(): void
+    public function testMissingVariableThrowsInsteadOfRenderingEmpty(): void
     {
-        $this->assertSame('name: ', $this->ctx->render('name: {{ appDomain }}'));
+        $this->expectException(MissingVariableException::class);
+
+        $this->ctx->render('name: {{ appDomain }}');
+    }
+
+    public function testEmptyIsAskedForWithAnExplicitDefault(): void
+    {
+        $this->assertSame('name: ', $this->ctx->render('name: {{ appDomain | "" }}'));
     }
 
     public function testMissingRequiredVariableThrows(): void
