@@ -10,6 +10,7 @@ use Nette\DI\ContainerLoader;
 use Sputnik\Config\Configuration;
 use Sputnik\Console\Application;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
+use Sputnik\Support\SourceFingerprint;
 
 final class ContainerFactory
 {
@@ -53,20 +54,14 @@ final class ContainerFactory
     }
 
     /**
-     * Fingerprint the service graph itself, so a change to what the container
-     * wires up invalidates the cache even when Application::VERSION is the
-     * unresolved `@package_version@` placeholder (true for any non-PHAR run).
+     * Fingerprint Sputnik's own sources, so any change to the service graph or
+     * to a wired class invalidates the cache even when Application::VERSION is
+     * the unresolved `@package_version@` placeholder, which it is on every
+     * non-PHAR run.
      */
     private function getServiceDefinitionsFingerprint(): string
     {
-        $path = __DIR__ . '/SputnikExtension.php';
-        $hash = md5_file($path);
-
-        if ($hash === false) {
-            throw new SputnikRuntimeException('Could not read service definitions file: ' . $path);
-        }
-
-        return $hash;
+        return SourceFingerprint::ofDirectory(\dirname(__DIR__));
     }
 
     /**

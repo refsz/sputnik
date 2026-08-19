@@ -205,7 +205,11 @@ final class VariableResolver implements VariableResolverInterface
     private function assertNoContextLevelSecrets(): void
     {
         foreach ($this->config->getContexts() as $contextName => $context) {
-            if (isset($context['variables']['secrets'])) {
+            $variables = $context['variables'] ?? null;
+
+            // array_key_exists, not isset: an empty `secrets:` key is null in NEON
+            // and must be rejected just as loudly as a populated one.
+            if (\is_array($variables) && \array_key_exists('secrets', $variables)) {
                 throw new InvalidConfigException(\sprintf(
                     "Context '%s' declares a 'variables.secrets' block, but secrets are not context-overridable",
                     $contextName,

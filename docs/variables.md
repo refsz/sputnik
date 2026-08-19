@@ -168,6 +168,11 @@ error.
     inside `user_1234` survives. Sputnik warns about the short value once per
     secret, visible with `-v`.
 
+    A multi-line value is masked line by line as well as whole, because streamed
+    output is indented before it is written. That means a short line inside a
+    long secret — an alias or a PIN on its own line — brings the word-boundary
+    behaviour above with it, and triggers the same warning.
+
     A literal secret written into the config file is compiled verbatim into
     `.sputnik/cache`, which is one more reason to use `pass`, `op` or the
     environment instead.

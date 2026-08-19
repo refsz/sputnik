@@ -205,6 +205,25 @@ final class VariableResolverSecretsTest extends TestCase
         $this->assertFalse($resolver->has('unknown.path'));
     }
 
+    public function testEmptyContextLevelSecretsKeyIsAlsoAConfigurationError(): void
+    {
+        $config = new Configuration([
+            'contexts' => [
+                'prod' => ['variables' => ['secrets' => null]],
+            ],
+            'variables' => [
+                'secrets' => ['apiToken' => 'literal'],
+            ],
+        ]);
+
+        $resolver = new VariableResolver($config, 'prod', sys_get_temp_dir(), new SecretRegistry());
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('prod');
+
+        $resolver->resolve('apiToken');
+    }
+
     /**
      * @param array<string, mixed> $secrets
      */
