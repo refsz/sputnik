@@ -42,6 +42,26 @@ Available on both direct task commands (`sputnik deploy -D ...`) and the run com
 
 Show additional output including log messages and stack traces on errors.
 
+### `-V` / `--version`
+
+Print the version and exit. A release build reports the tag and the commit it was
+built from, which is what a bug report needs:
+
+```bash
+$ php sputnik.phar --version
+Sputnik 0.2.0@a1b2c3d
+```
+
+### `-h` / `--help`
+
+Show usage for the application or for a single command, including the options and
+arguments a task declares:
+
+```bash
+sputnik --help
+sputnik deploy --help
+```
+
 ## Commands
 
 ### `init`

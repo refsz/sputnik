@@ -46,6 +46,8 @@ so nothing has to be quoted:
 ```php
 $ctx->shell('drush sql-dump | gzip > dump.gz');
 // → docker compose exec -T app_server sh -c "drush sql-dump | gzip > dump.gz"
+//   The quotes show the argument boundary; the line Sputnik echoes joins argv
+//   with spaces and makes no quoting promise.
 ```
 
 Set `shell` when the default `sh -c` is not enough -- `[bash, -lc]` starts a

@@ -33,7 +33,7 @@ Define tasks with options, arguments, and shell execution. Switch contexts for d
 ```bash
 $ php sputnik.phar deploy
 
-🛰  Sputnik v0.1.x │ .sputnik.dist.neon │ prod
+🛰  Sputnik v0.2.0 │ .sputnik.dist.neon │ prod
 
 ▸ deploy · Deploy the application
 
@@ -85,7 +85,7 @@ final class DeployTask implements TaskInterface
 ```bash
 $ php sputnik.phar deploy
 
-🛰  Sputnik v0.1.x │ .sputnik.dist.neon │ prod
+🛰  Sputnik v0.2.0 │ .sputnik.dist.neon │ prod
 
 ▸ deploy · Deploy the application
 
@@ -121,6 +121,14 @@ $ php sputnik.phar deploy
     Render files with `{{ variable }}` syntax. Re-rendered automatically on context switch.
 
     [:octicons-arrow-right-24: Templates](templates.md)
+
+-   :material-key-outline: **Secrets**
+
+    ---
+
+    Variables Sputnik refuses to print. Masked in echoed commands, streamed output and log lines.
+
+    [:octicons-arrow-right-24: Secrets](secrets.md)
 
 -   :material-docker: **Environments**
 

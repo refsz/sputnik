@@ -189,7 +189,7 @@ the command instead of disappearing.
 
 Values of variables declared under `variables.secrets` are replaced with `***`
 in the echoed command and in the command's output. See
-[Secrets](variables.md#secrets) for what that does and does not cover.
+[Secrets](secrets.md) for what that does and does not cover.
 
 Both methods accept an options array:
 
@@ -203,7 +203,7 @@ $ctx->exec(['make', 'build'], [
 
 - `env` -- additional environment variables for the process
 - `tty` -- allocate a TTY (disables timeout automatically)
-- `timeout` -- seconds before the process is killed (default: no timeout)
+- `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; `tty: true` removes the limit.
 
 Returns `ExecutionResult` with:
 
@@ -213,8 +213,12 @@ Returns `ExecutionResult` with:
 | `output` | Stdout content |
 | `errorOutput` | Stderr content |
 | `duration` | Execution time in seconds |
+| `command` | The command as it was displayed. An argv list is joined with spaces for readability and makes no quoting promise |
 | `isSuccessful()` | True if exit code is 0 |
 | `assertSuccess()` | Throws if exit code is not 0 |
+| `getOutput()` | Stdout, trimmed |
+| `getErrorOutput()` | Stderr, trimmed |
+| `getCombinedOutput()` | Stdout and stderr together |
 
 ### Sub-tasks
 
@@ -239,7 +243,7 @@ $ctx->success('message'); // green text
 $ctx->info('message');                  // shown with -v
 $ctx->warning('message');               // shown with -v
 $ctx->error('message');                 // shown with -v
-$ctx->log('debug', 'message', $ctx);   // generic PSR-3 log
+$ctx->log('debug', 'message', ['key' => 'value']); // generic PSR-3 log
 ```
 
 !!! info
