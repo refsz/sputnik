@@ -73,9 +73,15 @@ final class SecretRegistry
             $this->values[$name] = [];
         }
 
-        // Deduplicate at write time: append only if not already present
-        if (!\in_array($text, $this->values[$name], true)) {
-            $this->values[$name][] = $text;
+        // A streamed process output re-indents "\n" before the redactor ever
+        // sees it, so a multi-line secret no longer occurs as that substring.
+        // Accumulating each non-empty line alongside the whole value lets the
+        // redactor still match it line by line.
+        foreach ($this->candidatesFor($text) as $candidate) {
+            // Deduplicate at write time: append only if not already present
+            if (!\in_array($candidate, $this->values[$name], true)) {
+                $this->values[$name][] = $candidate;
+            }
         }
 
         // Recompute state diagnostic: set if any accumulated value is short
@@ -115,6 +121,26 @@ final class SecretRegistry
         $this->diagnostics = [];
 
         return $messages;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function candidatesFor(string $text): array
+    {
+        if (!str_contains($text, "\n")) {
+            return [$text];
+        }
+
+        $candidates = [$text];
+
+        foreach (explode("\n", $text) as $line) {
+            if ($line !== '') {
+                $candidates[] = $line;
+            }
+        }
+
+        return $candidates;
     }
 
     private function addDiagnostic(string $name, string $message): void

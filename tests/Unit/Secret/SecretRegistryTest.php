@@ -140,4 +140,39 @@ final class SecretRegistryTest extends TestCase
             $this->registry->takeDiagnostics(),
         );
     }
+
+    public function testMultiLineValueAccumulatesEachLineAndTheWholeValue(): void
+    {
+        $this->registry->remember('apiToken', "line one\nline two\nline three");
+
+        $this->assertSame(
+            ["line one\nline two\nline three", 'line three', 'line one', 'line two'],
+            $this->registry->values(),
+        );
+    }
+
+    public function testMultiLineValueWithBlankLinesSkipsEmptyLines(): void
+    {
+        $this->registry->remember('apiToken', "first\n\nsecond");
+
+        $this->assertSame(["first\n\nsecond", 'second', 'first'], $this->registry->values());
+    }
+
+    public function testMultiLineValueWithAShortLineReportsShortDiagnostic(): void
+    {
+        $this->registry->remember('apiToken', "ghp_this_is_long_enough\nab");
+
+        $this->assertSame(
+            ["secret 'apiToken' has a short value; unrelated output may be masked too"],
+            $this->registry->takeDiagnostics(),
+        );
+    }
+
+    public function testSingleLineValueBehavesExactlyAsBefore(): void
+    {
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $this->assertSame(['ghp_abcdefghij'], $this->registry->values());
+        $this->assertSame([], $this->registry->takeDiagnostics());
+    }
 }

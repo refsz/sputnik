@@ -112,4 +112,29 @@ final class SecretRedactorTest extends TestCase
             $this->redactor->redact('xxabcdefghyy abcdefg end'),
         );
     }
+
+    public function testMultiLineValueIndentedAsShellExecutorStreamsItIsFullyMasked(): void
+    {
+        $pem = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BA\n-----END PRIVATE KEY-----";
+        $this->registry->declareSecrets(['pemKey']);
+        $this->registry->remember('pemKey', $pem);
+
+        // ShellExecutor::streamOutput() rewrites "\n" into "\n  " before the
+        // text ever reaches the redactor, so the whole value no longer
+        // occurs as a substring; only the per-line accumulation lets this
+        // come out fully masked.
+        $indented = '  ' . str_replace("\n", "\n  ", $pem);
+
+        $this->assertSame("  ***\n  ***\n  ***", $this->redactor->redact($indented));
+    }
+
+    public function testSingleLineValueIsUnaffectedByMultiLineHandling(): void
+    {
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $this->assertSame(
+            'Authorization: Bearer ***',
+            $this->redactor->redact('Authorization: Bearer ghp_abcdefghij'),
+        );
+    }
 }
