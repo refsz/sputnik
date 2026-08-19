@@ -42,9 +42,23 @@ final class ConfigValidator
                 ),
             ])->castTo('array'),
             'contexts' => Expect::arrayOf(
+                // The context body stays open: a listener may read a key of its
+                // own from the raw config. The variables namespace does not -
+                // only constants take effect there, so a typo used to leave the
+                // override silently unapplied.
                 Expect::structure([
                     'description' => Expect::string()->nullable(),
-                    'variables' => Expect::anyOf(Expect::array(), Expect::null()),
+                    'variables' => Expect::anyOf(
+                        Expect::structure([
+                            'constants' => Expect::array(),
+                            // Accepted here so the resolver's explicit "not
+                            // context-overridable" error is what the user reads,
+                            // rather than a generic unexpected-item message.
+                            'dynamics' => Expect::mixed(),
+                            'secrets' => Expect::mixed(),
+                        ])->castTo('array'),
+                        Expect::null(),
+                    ),
                 ])->otherItems()->castTo('array'),
                 'string',
             ),
