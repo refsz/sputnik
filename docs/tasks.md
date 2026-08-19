@@ -42,7 +42,7 @@ final class MigrateTask implements TaskInterface
 | `environment` | | `'container'`, `'host'`, or `null` (default). See [Environments](environments.md) |
 
 !!! warning
-    Task names must not collide with built-in commands. See [CLI Reference](cli.md#reserved-names) for the full list.
+    A task name that collides with a built-in is skipped with a warning, except `init`, which a project task may take over. See [CLI Reference](cli.md#reserved-names).
 
 ## Options and Arguments
 

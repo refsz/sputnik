@@ -148,6 +148,44 @@ final class TaskDiscoveryTest extends TestCase
         $discovery->discoverAll();
     }
 
+    public function testAStructuralNameSkipsOnlyThatTask(): void
+    {
+        // A collision used to throw, which took down the whole CLI: no task ran
+        // and even `list` failed.
+        $discovery = new TaskDiscovery([$this->fixture('CollidesWithStructural')]);
+
+        $tasks = $discovery->discoverAll();
+
+        $this->assertArrayNotHasKey('list', $tasks);
+        $this->assertArrayHasKey('deploy', $tasks, 'An unrelated task must survive the collision');
+    }
+
+    public function testASkippedTaskIsReportedWithItsFileAndAWayOut(): void
+    {
+        $discovery = new TaskDiscovery([$this->fixture('CollidesWithStructural')]);
+        $discovery->discoverAll();
+
+        $warnings = $discovery->getWarnings();
+
+        $this->assertCount(1, $warnings);
+        $this->assertStringContainsString("'list'", $warnings[0]);
+        $this->assertStringContainsString('ListTask.php', $warnings[0], 'The file is what the user has to edit');
+        $this->assertStringContainsString('rename', $warnings[0]);
+    }
+
+    public function testAProjectTaskMayTakeTheInitName(): void
+    {
+        // Scaffolding a project happens once; a project command named init may
+        // well be a daily one. The built-in loses, but says so.
+        $discovery = new TaskDiscovery([$this->fixture('ShadowsInit')]);
+
+        $tasks = $discovery->discoverAll();
+
+        $this->assertArrayHasKey('init', $tasks);
+        $this->assertCount(1, $discovery->getWarnings());
+        $this->assertStringContainsString('shadows', $discovery->getWarnings()[0]);
+    }
+
     public function testReservedOptionNameThrows(): void
     {
         $discovery = new TaskDiscovery([$this->fixture('ReservedOptionName')]);
