@@ -67,9 +67,13 @@ final class ConfigValidator
             ),
             'environment' => Expect::structure([
                 'detection' => Expect::string()->nullable(),
-                'executor' => Expect::string()->nullable()->assert(
-                    static fn (?string $v): bool => $v === null || str_contains($v, '{command}'),
-                    "'environment.executor' must contain the {command} placeholder",
+                'executor' => Expect::listOf('string')->nullable()->assert(
+                    static fn (?array $v): bool => $v === null || $v !== [],
+                    "'environment.executor' must not be an empty list",
+                ),
+                'shell' => Expect::listOf('string')->nullable()->assert(
+                    static fn (?array $v): bool => $v === null || $v !== [],
+                    "'environment.shell' must not be an empty list",
                 ),
             ])->castTo('array'),
             'defaults' => Expect::structure([

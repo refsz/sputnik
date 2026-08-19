@@ -80,6 +80,39 @@ final class TaskContext
     }
 
     /**
+     * Run a program with arguments, without a shell.
+     *
+     * The list form is the safe default: argument boundaries are preserved by
+     * the operating system, so a value containing spaces, quotes or a semicolon
+     * is one argument and nothing else. Placeholders are substituted per
+     * element and inserted verbatim - no shell reads them, so there is nothing
+     * to escape. Use shell() when you need a pipe, a redirect or a glob.
+     *
+     * @param list<string>                                                    $command Program and arguments
+     * @param array{env?: array<string, string>, tty?: bool, timeout?: float} $options
+     *
+     * @throws MissingVariableException If a required variable is missing
+     */
+    public function exec(array $command, array $options = []): ExecutionResult
+    {
+        if ($command === []) {
+            throw new \InvalidArgumentException('Cannot execute an empty command list');
+        }
+
+        $interpolated = array_map(
+            fn (string $argument): string => $this->templateRenderer->render($argument),
+            $command,
+        );
+
+        return $this->shellExecutor->execute($interpolated, [
+            'cwd' => $this->workingDir,
+            'env' => $options['env'] ?? [],
+            'tty' => $options['tty'] ?? false,
+            'timeout' => $options['timeout'] ?? null,
+        ]);
+    }
+
+    /**
      * Execute a shell command with variable interpolation.
      *
      * Same template syntax as render(), but every value is escaped as a single
@@ -96,22 +129,6 @@ final class TaskContext
         $interpolated = $this->commandRenderer->render($command);
 
         return $this->shellExecutor->execute($interpolated, [
-            'cwd' => $this->workingDir,
-            'env' => $options['env'] ?? [],
-            'tty' => $options['tty'] ?? false,
-            'timeout' => $options['timeout'] ?? null,
-        ]);
-    }
-
-    /**
-     * Execute a shell command without variable interpolation (raw).
-     *
-     * @param string                                                          $command The command to execute as-is
-     * @param array{env?: array<string, string>, tty?: bool, timeout?: float} $options
-     */
-    public function shellRaw(string $command, array $options = []): ExecutionResult
-    {
-        return $this->shellExecutor->execute($command, [
             'cwd' => $this->workingDir,
             'env' => $options['env'] ?? [],
             'tty' => $options['tty'] ?? false,

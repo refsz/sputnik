@@ -15,7 +15,11 @@ final class EnvironmentAwareExecutor implements ExecutorInterface
     ) {
     }
 
-    public function execute(string $command, array $options = []): ExecutionResult
+    /**
+     * @param list<string>|string                                                                $command
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool} $options
+     */
+    public function execute(array|string $command, array $options = []): ExecutionResult
     {
         $wrapped = $this->detector->wrapCommand($command, $this->environment);
 

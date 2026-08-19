@@ -9,11 +9,18 @@ use Symfony\Component\Process\Process;
 
 final class EnvironmentDetector
 {
+    private const DEFAULT_SHELL = ['sh', '-c'];
+
     private bool $isContainer;
 
+    /**
+     * @param list<string>|null $executor Prepended to a command's argv, e.g. ['ddev', 'exec']
+     * @param list<string>|null $shell    How to start a shell inside the executor, default ['sh', '-c']
+     */
     public function __construct(
         private readonly ?string $detection = null,
-        private readonly ?string $executor = null,
+        private readonly ?array $executor = null,
+        private readonly ?array $shell = null,
     ) {
         $this->isContainer = $this->detect();
     }
@@ -23,12 +30,27 @@ final class EnvironmentDetector
         return $this->isContainer;
     }
 
-    public function getExecutor(): ?string
+    /**
+     * @return list<string>|null
+     */
+    public function getExecutor(): ?array
     {
         return $this->executor;
     }
 
-    public function wrapCommand(string $command, ?string $environment): string
+    /**
+     * Wrap a command for the target environment.
+     *
+     * An argv list is prepended with the executor, so argument boundaries
+     * survive. A shell string becomes the final argument of a shell invocation
+     * inside the executor - itself just argv, which is why no quoting is
+     * needed and why one executor covers both forms.
+     *
+     * @param list<string>|string $command
+     *
+     * @return list<string>|string
+     */
+    public function wrapCommand(array|string $command, ?string $environment): array|string
     {
         if ($environment === 'host' && $this->isContainer) {
             throw new RuntimeException('Host task cannot be executed inside a container');
@@ -42,13 +64,11 @@ final class EnvironmentDetector
             return $command;
         }
 
-        // Use single replacement to avoid double-substitution if $command contains '{command}'
-        $pos = strpos($this->executor, '{command}');
-        if ($pos === false) {
-            return $this->executor;
+        if (\is_array($command)) {
+            return [...$this->executor, ...$command];
         }
 
-        return substr($this->executor, 0, $pos) . $command . substr($this->executor, $pos + 9);
+        return [...$this->executor, ...($this->shell ?? self::DEFAULT_SHELL), $command];
     }
 
     private function detect(): bool

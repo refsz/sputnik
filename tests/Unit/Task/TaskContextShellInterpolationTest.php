@@ -150,15 +150,16 @@ final class TaskContextShellInterpolationTest extends TestCase
         $this->assertSame("echo ''", $executed[0]['command']);
     }
 
-    public function testShellRawDoesNotInterpolate(): void
+    public function testEscapedBracesReachTheShellLiterally(): void
     {
         $this->variables->set('HOST', 'localhost');
 
-        $this->ctx->shellRaw('mysql -h {{ HOST }}');
+        // shellRaw() is gone; a literal placeholder is expressed by escaping,
+        // which is the same rule template files follow.
+        $this->ctx->shell('mysql -h \\{\\{ HOST \\}\\}');
 
         $executed = $this->executor->getExecutedCommands();
         $this->assertCount(1, $executed);
-        // shellRaw passes the command through unchanged
         $this->assertSame('mysql -h {{ HOST }}', $executed[0]['command']);
     }
 }

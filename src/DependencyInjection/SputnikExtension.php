@@ -146,6 +146,7 @@ final class SputnikExtension extends CompilerExtension
             ->setFactory(EnvironmentDetector::class, [
                 'detection' => $envConfig['detection'] ?? null,
                 'executor' => $envConfig['executor'] ?? null,
+                'shell' => $envConfig['shell'] ?? null,
             ])
             ->setAutowired(true);
 

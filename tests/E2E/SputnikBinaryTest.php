@@ -522,7 +522,7 @@ final class SputnikBinaryTest extends TestCase
                     - sputnik
 
             environment:
-                executor: "bash -c {command}"
+                executor: [env]
             NEON);
 
         $this->writeTask('container', <<<'PHP'
@@ -531,7 +531,7 @@ final class SputnikBinaryTest extends TestCase
             {
                 public function __invoke(TaskContext $ctx): TaskResult
                 {
-                    $ctx->shellRaw('echo "from-container"');
+                    $ctx->exec(['echo', 'from-container']);
                     return TaskResult::success();
                 }
             }
@@ -551,7 +551,7 @@ final class SputnikBinaryTest extends TestCase
                     - sputnik
 
             environment:
-                executor: "false {command}"
+                executor: ["false"]
             NEON);
 
         $this->writeTask('hostonly', <<<'PHP'
@@ -560,7 +560,7 @@ final class SputnikBinaryTest extends TestCase
             {
                 public function __invoke(TaskContext $ctx): TaskResult
                 {
-                    $ctx->shellRaw('echo "from-host"');
+                    $ctx->exec(['echo', 'from-host']);
                     return TaskResult::success();
                 }
             }
@@ -581,7 +581,7 @@ final class SputnikBinaryTest extends TestCase
                 {
                     public function __invoke(TaskContext $ctx): TaskResult
                     {
-                        $ctx->shellRaw('echo "should not run"');
+                        $ctx->exec(['echo', 'should not run']);
                         return TaskResult::success();
                     }
                 }
@@ -592,6 +592,43 @@ final class SputnikBinaryTest extends TestCase
 
         $this->assertNotSame(0, $result->getExitCode());
         $this->assertStringContainsString('executor', $result->getOutput());
+    }
+
+    public function testExecKeepsAnArgumentWithShellMetacharactersIntact(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            environment:
+                executor: [env]
+            NEON);
+
+        // The regression this primitive exists for: through a string command
+        // the host shell would split at the semicolon and run the second half
+        // outside the executor.
+        $this->writeTask('meta', <<<'PHP'
+            #[Task(name: 'meta', description: 'Argument with metacharacters', environment: 'container')]
+            final class MetaTask implements TaskInterface
+            {
+                public function __invoke(TaskContext $ctx): TaskResult
+                {
+                    $result = $ctx->exec(['printf', '[%s]', 'a; echo pwned']);
+                    $ctx->writeln($result->getOutput());
+
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['meta'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        // One argument, so printf formats all of it. Split at the semicolon it
+        // would have printed "[a]" and run the rest as a separate command.
+        $this->assertStringContainsString('[a; echo pwned]', $result->getOutput());
+        $this->assertStringNotContainsString('[a]', $result->getOutput());
     }
 
     // ── Secret masking ──────────────────────────────────────────

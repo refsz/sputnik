@@ -28,23 +28,24 @@ final class ShellExecutor implements ExecutorInterface
     }
 
     /**
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float, tty?: bool} $options
-     *
-     * @phpstan-ignore method.childParameterType
+     * @param list<string>|string                                                                $command
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool} $options
      */
-    public function execute(string $command, array $options = []): ExecutionResult
+    public function execute(array|string $command, array $options = []): ExecutionResult
     {
+        $display = $this->display($command);
+
         $cwdFallback = getcwd();
         $cwd = $options['cwd'] ?? ($cwdFallback !== false ? $cwdFallback : null);
         $env = $options['env'] ?? [];
         $tty = $options['tty'] ?? false;
         $timeout = $tty ? 0 : ($options['timeout'] ?? $this->defaultTimeout);
 
-        $this->sputnikOutput?->command($command);
+        $this->sputnikOutput?->command($display);
 
         $startTime = microtime(true);
 
-        $process = Process::fromShellCommandline($command, $cwd, $env, null, $timeout);
+        $process = $this->createProcess($command, $cwd, $env, $timeout);
 
         if ($tty && Process::isTtySupported()) {
             $process->setTty(true);
@@ -75,16 +76,17 @@ final class ShellExecutor implements ExecutorInterface
             output: $output,
             errorOutput: $errorOutput,
             duration: $duration,
-            command: $command,
+            command: $display,
         );
     }
 
     /**
      * Execute a command without streaming output.
      *
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float} $options
+     * @param list<string>|string                                                    $command
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null} $options
      */
-    public function executeQuiet(string $command, array $options = []): ExecutionResult
+    public function executeQuiet(array|string $command, array $options = []): ExecutionResult
     {
         $cwdFallback = getcwd();
         $cwd = $options['cwd'] ?? ($cwdFallback !== false ? $cwdFallback : null);
@@ -93,7 +95,7 @@ final class ShellExecutor implements ExecutorInterface
 
         $startTime = microtime(true);
 
-        $process = Process::fromShellCommandline($command, $cwd, $env, null, $timeout);
+        $process = $this->createProcess($command, $cwd, $env, $timeout);
         $process->run();
 
         $duration = microtime(true) - $startTime;
@@ -103,8 +105,36 @@ final class ShellExecutor implements ExecutorInterface
             output: $process->getOutput(),
             errorOutput: $process->getErrorOutput(),
             duration: $duration,
-            command: $command,
+            command: $this->display($command),
         );
+    }
+
+    /**
+     * @param list<string>|string   $command
+     * @param array<string, string> $env
+     */
+    private function createProcess(array|string $command, ?string $cwd, array $env, ?float $timeout): Process
+    {
+        if (!\is_array($command)) {
+            return Process::fromShellCommandline($command, $cwd, $env, null, $timeout);
+        }
+
+        if ($command === []) {
+            throw new \InvalidArgumentException('Cannot execute an empty command list');
+        }
+
+        return new Process($command, $cwd, $env, null, $timeout);
+    }
+
+    /**
+     * A command as shown to the user and recorded on the result. Joining an
+     * argv list is for display only and makes no quoting promise.
+     *
+     * @param list<string>|string $command
+     */
+    private function display(array|string $command): string
+    {
+        return \is_array($command) ? implode(' ', $command) : $command;
     }
 
     private function streamOutput(string $buffer, bool $isError): void

@@ -15,21 +15,42 @@ You can override the detection with a custom shell command. Exit code `0` means 
 ```neon
 environment:
     detection: "test -n $MY_CONTAINER_VAR"
-    executor: "docker compose exec -T app {command}"
+    executor: [docker, compose, exec, -T, app]
 ```
 
 ## Configuration
 
 ```neon
 environment:
-    executor: "docker compose exec -T app_server {command}"
+    executor: [docker, compose, exec, -T, app_server]
+    shell: [bash, -lc]      # optional, default [sh, -c]
 ```
 
-The `{command}` placeholder is replaced literally with the actual command string. Examples:
+The executor is the program and arguments that run a command inside the
+container. Sputnik prepends it, so argument boundaries survive:
 
-- Docker Compose: `"docker compose exec -T app_server {command}"`
-- DDEV: `"ddev exec {command}"`
-- Podman: `"podman exec -t app {command}"`
+```php
+$ctx->exec(['drush', 'cr']);   // → docker compose exec -T app_server drush cr
+```
+
+Examples:
+
+- Docker Compose: `[docker, compose, exec, -T, app_server]`
+- DDEV: `[ddev, exec]`
+- Podman: `[podman, exec, -t, app]`
+
+`shell()` needs a shell inside the container, which is the same prepending
+applied to a shell invocation -- the command becomes its final single argument,
+so nothing has to be quoted:
+
+```php
+$ctx->shell('drush sql-dump | gzip > dump.gz');
+// → docker compose exec -T app_server sh -c "drush sql-dump | gzip > dump.gz"
+```
+
+Set `shell` when the default `sh -c` is not enough -- `[bash, -lc]` starts a
+login shell, so `PATH` inside the container includes tools installed for the
+user.
 
 The `executor` is only required if you have tasks with `environment: 'container'`. If you only use `environment: 'host'` or no environment at all, you can omit it.
 
@@ -78,7 +99,7 @@ The `executor` is only required if you have tasks with `environment: 'container'
 
     ```neon
     environment:
-        executor: "docker compose exec -T app {command}"
+        executor: [docker, compose, exec, -T, app]
     ```
 
 ## Listener Environment
