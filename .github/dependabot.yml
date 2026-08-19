@@ -7,8 +7,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
-    commit-message:
-      prefix: "[BUILD]"
     groups:
       dev-tools:
         applies-to: version-updates
@@ -30,8 +28,6 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-    commit-message:
-      prefix: "[CI]"
     groups:
       actions:
         applies-to: version-updates
