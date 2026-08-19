@@ -9,7 +9,7 @@ use Symfony\Component\Process\Process;
 
 final class EnvironmentDetector
 {
-    private const DEFAULT_SHELL = ['sh', '-c'];
+    private const array DEFAULT_SHELL = ['sh', '-c'];
 
     private bool $isContainer;
 
