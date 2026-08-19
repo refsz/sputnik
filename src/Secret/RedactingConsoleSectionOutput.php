@@ -47,4 +47,15 @@ final class RedactingConsoleSectionOutput extends ConsoleSectionOutput
     {
         parent::writeln($this->redactor->redactMessages($messages), $options);
     }
+
+    /**
+     * The decorated branch of overwrite() prints via doWrite() directly,
+     * bypassing write()/writeln(), so it needs its own redaction.
+     *
+     * @param string|iterable<mixed> $message
+     */
+    public function overwrite(string|iterable $message): void
+    {
+        parent::overwrite($this->redactor->redactMessages($message));
+    }
 }

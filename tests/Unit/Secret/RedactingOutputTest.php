@@ -160,6 +160,31 @@ final class RedactingOutputTest extends TestCase
         $this->assertSame("token ***\n", stream_get_contents($stream));
     }
 
+    public function testDecoratedOverwriteIsRedacted(): void
+    {
+        $registry = new SecretRegistry();
+        $registry->declareSecrets(['apiToken']);
+        $registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $stream = fopen('php://memory', 'w+');
+        $console = new MemoryConsoleOutput($stream);
+        $console->setDecorated(true);
+        $decorated = new RedactingConsoleOutput($console, new SecretRedactor($registry));
+
+        // overwrite() only takes its cursor-rewind branch when the section is
+        // decorated and already holds content - the branch that bypasses
+        // write()/writeln() and prints via doWrite() directly.
+        $section = $decorated->section();
+        $section->writeln('placeholder');
+        $section->overwrite('token ghp_abcdefghij');
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+
+        $this->assertStringNotContainsString('ghp_abcdefghij', $contents);
+        $this->assertStringContainsString('***', $contents);
+    }
+
     public function testTableRenderedThroughSymfonyStyleIsRedacted(): void
     {
         $registry = new SecretRegistry();
