@@ -463,6 +463,21 @@ final class ConfigValidatorTest extends TestCase
         ]);
     }
 
+    public function testEnvIsAValidDynamicType(): void
+    {
+        // DynamicVariableResolver has always implemented it; only the allow-list
+        // did not know about it, so reading HOME needed a subprocess.
+        $this->validator->validate([
+            'variables' => [
+                'dynamics' => [
+                    'home' => ['type' => 'env', 'name' => 'HOME'],
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(true);
+    }
+
     public function testSecretsAreAccepted(): void
     {
         $this->validator->validate([
