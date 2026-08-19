@@ -152,10 +152,6 @@ error.
     reason to point at `pass`, `op` or the environment instead of writing a
     literal into the config file.
 
-    Writes to a Symfony console section — `ConsoleOutput::section()` — are not
-    masked. Sputnik itself never creates one, so this only matters to code that
-    deliberately does.
-
     A command run with `['tty' => true]` inherits the terminal's descriptors
     directly, so its output never passes through PHP and is not masked — only
     the echoed command line is. Separately, a value split across two reads of

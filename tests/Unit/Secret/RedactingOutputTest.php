@@ -9,10 +9,16 @@ use Sputnik\Secret\RedactingConsoleOutput;
 use Sputnik\Secret\RedactingOutput;
 use Sputnik\Secret\SecretRedactor;
 use Sputnik\Secret\SecretRegistry;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
+use Symfony\Component\Console\Output\ConsoleSectionOutput;
 use Symfony\Component\Console\Output\Output;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\StreamOutput;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class RedactingOutputTest extends TestCase
 {
@@ -135,6 +141,77 @@ final class RedactingOutputTest extends TestCase
         $this->assertCount(2, $messages);
         $this->assertSame('token ***', $messages[0]);
         $this->assertSame($plainObject, $messages[1]);
+    }
+
+    public function testSectionWritelnIsRedacted(): void
+    {
+        $registry = new SecretRegistry();
+        $registry->declareSecrets(['apiToken']);
+        $registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $stream = fopen('php://memory', 'w+');
+        $console = new MemoryConsoleOutput($stream);
+        $decorated = new RedactingConsoleOutput($console, new SecretRedactor($registry));
+
+        $section = $decorated->section();
+        $section->writeln('token ghp_abcdefghij');
+
+        rewind($stream);
+        $this->assertSame("token ***\n", stream_get_contents($stream));
+    }
+
+    public function testTableRenderedThroughSymfonyStyleIsRedacted(): void
+    {
+        $registry = new SecretRegistry();
+        $registry->declareSecrets(['apiToken']);
+        $registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $stream = fopen('php://memory', 'w+');
+        $console = new MemoryConsoleOutput($stream);
+        $decorated = new RedactingConsoleOutput($console, new SecretRedactor($registry));
+
+        $io = new SymfonyStyle(new ArrayInput([], new InputDefinition()), $decorated);
+        $io->table(['Header'], [['ghp_abcdefghij']]);
+
+        rewind($stream);
+        $contents = stream_get_contents($stream);
+
+        $this->assertStringContainsString('***', $contents);
+        $this->assertStringNotContainsString('ghp_abcdefghij', $contents);
+    }
+}
+
+/**
+ * @internal test helper: a ConsoleOutputInterface backed by a real (memory)
+ * stream, so RedactingConsoleOutput::section() can build a redacting section
+ * from it exactly as it would from a real ConsoleOutput
+ */
+final class MemoryConsoleOutput extends StreamOutput implements ConsoleOutputInterface
+{
+    private OutputInterface $stderr;
+
+    /**
+     * @param resource $stream
+     */
+    public function __construct($stream)
+    {
+        parent::__construct($stream, self::VERBOSITY_NORMAL, false);
+        $this->stderr = new BufferedOutput();
+    }
+
+    public function getErrorOutput(): OutputInterface
+    {
+        return $this->stderr;
+    }
+
+    public function setErrorOutput(OutputInterface $error): void
+    {
+        $this->stderr = $error;
+    }
+
+    public function section(): ConsoleSectionOutput
+    {
+        throw new \LogicException('Not used: RedactingConsoleOutput builds its own section from getStream().');
     }
 }
 

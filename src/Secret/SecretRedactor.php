@@ -27,6 +27,34 @@ final class SecretRedactor
     }
 
     /**
+     * Redact a console write()/writeln() payload: a plain string, or each
+     * scalar/Stringable item of an iterable of messages. Shared by every
+     * OutputInterface decorator that needs to redact before delegating,
+     * so the matching rules live in exactly one place.
+     *
+     * @param string|iterable<mixed> $messages
+     *
+     * @return string|list<mixed>
+     */
+    public function redactMessages(string|iterable $messages): string|array
+    {
+        if (\is_string($messages)) {
+            return $this->redact($messages);
+        }
+
+        $redacted = [];
+        foreach ($messages as $message) {
+            $redacted[] = match (true) {
+                \is_string($message) => $this->redact($message),
+                \is_scalar($message), $message instanceof \Stringable => $this->redact((string) $message),
+                default => $message,
+            };
+        }
+
+        return $redacted;
+    }
+
+    /**
      * The shell-escaped form only differs when the value contains a quote, in
      * which case the raw value no longer occurs in the escaped string.
      *
