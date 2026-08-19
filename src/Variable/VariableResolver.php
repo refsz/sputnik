@@ -68,7 +68,11 @@ final class VariableResolver implements VariableResolverInterface
             $this->resolveSecret($root);
         }
 
-        return $this->getNestedValue($this->resolved, $name, $default);
+        // A stored null - a failed secret as much as any other variable that
+        // resolves to null - counts as absent, matching the null-as-absent
+        // rule TemplateRenderer already applies. The cache entry itself is
+        // untouched, so a failed secret is not re-resolved on the next access.
+        return $this->getNestedValue($this->resolved, $name, $default) ?? $default;
     }
 
     public function has(string $name): bool

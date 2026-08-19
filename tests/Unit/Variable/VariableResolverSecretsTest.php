@@ -92,6 +92,34 @@ final class VariableResolverSecretsTest extends TestCase
         $this->assertSame(["secret 'apiToken' could not be resolved"], $registry->takeDiagnostics());
     }
 
+    public function testFailedSecretYieldsTheCallersDefaultWithoutReResolving(): void
+    {
+        $marker = sys_get_temp_dir() . '/sputnik_secret_marker_' . uniqid();
+        $resolver = $this->resolver([
+            'apiToken' => ['type' => 'command', 'command' => 'touch ' . escapeshellarg($marker) . ' && exit 1'],
+        ]);
+
+        $this->assertSame('fallback', $resolver->resolve('apiToken', 'fallback'));
+        $this->assertFileExists($marker);
+        unlink($marker);
+
+        // Accessed again: the cached failure must not re-run the command
+        // (the marker file would reappear), yet the default still applies.
+        $this->assertSame('fallback', $resolver->resolve('apiToken', 'fallback'));
+        $this->assertFileDoesNotExist($marker);
+    }
+
+    public function testFailedSecretHasSemanticsAreUnchanged(): void
+    {
+        $resolver = $this->resolver([
+            'apiToken' => ['type' => 'command', 'command' => 'exit 1'],
+        ]);
+
+        $resolver->resolve('apiToken', 'fallback');
+
+        $this->assertTrue($resolver->has('apiToken'));
+    }
+
     public function testNameInTwoSourcesIsAConfigurationError(): void
     {
         $config = new Configuration([
