@@ -24,7 +24,6 @@ Define tasks with options, arguments, and shell execution. Switch contexts for d
 <span class="sputnik-pill">PHAR-first</span>
 <span class="sputnik-pill">Context-aware</span>
 <span class="sputnik-pill">Container routing</span>
-<span class="sputnik-pill">Secret masking</span>
 <span class="sputnik-pill">PHP 8.3+</span>
 
 </div>
