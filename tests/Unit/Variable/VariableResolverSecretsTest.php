@@ -174,6 +174,42 @@ final class VariableResolverSecretsTest extends TestCase
         $resolver->resolve('branch');
     }
 
+    public function testNestedMapUnderSecretsIsAConfigurationError(): void
+    {
+        $resolver = $this->resolver([
+            'db' => ['user' => 'admin', 'password' => 'hunter2'],
+        ]);
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('db');
+
+        $resolver->resolve('db');
+    }
+
+    public function testNestedMapMissingTheScriptKeyIsAConfigurationError(): void
+    {
+        $resolver = $this->resolver([
+            'apiToken' => ['type' => 'script', 'notScript' => 'echo hi'],
+        ]);
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('apiToken');
+
+        $resolver->resolve('apiToken');
+    }
+
+    public function testNestedMapMissingTheNameKeyForEnvTypeIsAConfigurationError(): void
+    {
+        $resolver = $this->resolver([
+            'apiToken' => ['type' => 'env', 'notName' => 'SOME_VAR'],
+        ]);
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('apiToken');
+
+        $resolver->resolve('apiToken');
+    }
+
     public function testHasIsHonestAboutNestedPathsUnderAPlainStringSecret(): void
     {
         $resolver = $this->resolver(['apiToken' => 'plain-string-value']);

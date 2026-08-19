@@ -245,6 +245,18 @@ final class VariableResolver implements VariableResolverInterface
         return $context['variables']['constants'] ?? [];
     }
 
+    /**
+     * The key each secret type requires - a definition missing it is not a
+     * valid definition of that type, it is an arbitrary map (e.g. a nested
+     * map of unrelated credentials) that happens to have no 'type' key and
+     * would otherwise default to 'command' and silently resolve to null.
+     */
+    private const REQUIRED_KEY_BY_TYPE = [
+        'command' => 'command',
+        'script' => 'script',
+        'env' => 'name',
+    ];
+
     private function assertSupportedSecretType(string $name, mixed $definition): void
     {
         if (!\is_array($definition)) {
@@ -258,6 +270,16 @@ final class VariableResolver implements VariableResolverInterface
                 "Secret '%s' uses unsupported type '%s'; use command, script or env",
                 $name,
                 \is_string($type) ? $type : get_debug_type($type),
+            ));
+        }
+
+        $requiredKey = self::REQUIRED_KEY_BY_TYPE[$type];
+
+        if (!\array_key_exists($requiredKey, $definition)) {
+            throw new InvalidConfigException(\sprintf(
+                "Secret '%s' is missing its '%s' key; a nested map is not supported under 'secrets'",
+                $name,
+                $requiredKey,
             ));
         }
     }
