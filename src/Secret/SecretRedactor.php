@@ -50,7 +50,17 @@ final class SecretRedactor
         }
 
         $pattern = '/(?<![\w-])' . preg_quote($value, '/') . '(?![\w-])/';
+        $replaced = preg_replace($pattern, self::PLACEHOLDER, $text);
 
-        return preg_replace($pattern, self::PLACEHOLDER, $text) ?? $text;
+        if ($replaced === null) {
+            // preg_replace() can return null under a PCRE backtrack or JIT
+            // stack limit on pathological input. Masking must fail closed:
+            // fall back to an unconditional substring replace rather than
+            // printing the raw chunk, even though that over-masks any other
+            // occurrence of the value that was not at a word boundary.
+            return str_replace($value, self::PLACEHOLDER, $text);
+        }
+
+        return $replaced;
     }
 }
