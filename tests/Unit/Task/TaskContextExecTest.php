@@ -109,6 +109,35 @@ final class TaskContextExecTest extends TestCase
         }
     }
 
+    public function testWorkingDirIsTheDefaultCwd(): void
+    {
+        $this->ctx->exec(['ls']);
+
+        $this->assertSame(sys_get_temp_dir(), $this->executor->getExecutedCommands()[0]['options']['cwd']);
+    }
+
+    public function testCwdCanBeOverriddenPerCall(): void
+    {
+        // Without this a command in a subdirectory needs shell('cd x && ...'),
+        // which puts the command back through a shell.
+        $this->ctx->exec(['npm', 'ci'], ['cwd' => sys_get_temp_dir() . '/frontend']);
+
+        $this->assertSame(
+            sys_get_temp_dir() . '/frontend',
+            $this->executor->getExecutedCommands()[0]['options']['cwd'],
+        );
+    }
+
+    public function testShellAcceptsTheSameCwdOption(): void
+    {
+        $this->ctx->shell('npm ci', ['cwd' => sys_get_temp_dir() . '/frontend']);
+
+        $this->assertSame(
+            sys_get_temp_dir() . '/frontend',
+            $this->executor->getExecutedCommands()[0]['options']['cwd'],
+        );
+    }
+
     public function testOptionsArePassedThrough(): void
     {
         $this->ctx->exec(['ls'], ['timeout' => 5.0, 'env' => ['FOO' => 'bar']]);
