@@ -154,10 +154,18 @@ final class VariableResolver implements VariableResolverInterface
 
     private function declareSecrets(): void
     {
+        $this->assertNoContextLevelSecrets();
+
         $definitions = $this->config->getSecrets();
 
         if ($definitions === []) {
             return;
+        }
+
+        if (\array_key_exists('context', $definitions)) {
+            throw new InvalidConfigException(
+                "Variable 'context' is a built-in variable and cannot be declared as a secret",
+            );
         }
 
         $declaredElsewhere = array_merge(
@@ -184,6 +192,24 @@ final class VariableResolver implements VariableResolverInterface
         foreach (array_keys($definitions) as $name) {
             if (\array_key_exists($name, $this->resolved)) {
                 $this->secrets->remember($name, $this->resolved[$name]);
+            }
+        }
+    }
+
+    /**
+     * Secrets are not context-overridable, matching dynamics. A
+     * `contexts.*.variables.secrets` block is silently ignored by resolve()
+     * otherwise - the name never matches a declared secret - so it must be
+     * rejected explicitly rather than left to resolve to nothing.
+     */
+    private function assertNoContextLevelSecrets(): void
+    {
+        foreach ($this->config->getContexts() as $contextName => $context) {
+            if (isset($context['variables']['secrets'])) {
+                throw new InvalidConfigException(\sprintf(
+                    "Context '%s' declares a 'variables.secrets' block, but secrets are not context-overridable",
+                    $contextName,
+                ));
             }
         }
     }

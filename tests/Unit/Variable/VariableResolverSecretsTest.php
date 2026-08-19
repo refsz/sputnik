@@ -128,6 +128,32 @@ final class VariableResolverSecretsTest extends TestCase
         $resolver->resolve('apiToken');
     }
 
+    public function testContextLevelSecretsBlockIsAConfigurationError(): void
+    {
+        $config = new Configuration([
+            'contexts' => [
+                'prod' => ['variables' => ['secrets' => ['dbPassword' => 'literal']]],
+            ],
+        ]);
+
+        $resolver = new VariableResolver($config, 'prod', sys_get_temp_dir(), new SecretRegistry());
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('prod');
+
+        $resolver->resolve('anything');
+    }
+
+    public function testSecretNamedContextIsAConfigurationError(): void
+    {
+        $resolver = $this->resolver(['context' => 'literal']);
+
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage('context');
+
+        $resolver->resolve('context');
+    }
+
     public function testUnsupportedSecretTypeIsAConfigurationError(): void
     {
         $resolver = $this->resolver(['branch' => ['type' => 'git', 'property' => 'branch']]);
