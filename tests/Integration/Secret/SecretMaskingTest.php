@@ -8,7 +8,9 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use Sputnik\Attribute\Task;
 use Sputnik\Config\Configuration;
+use Sputnik\Console\OutputChannel;
 use Sputnik\Console\SputnikOutput;
+use Sputnik\Executor\ShellExecutor;
 use Sputnik\Secret\RedactingOutput;
 use Sputnik\Secret\SecretRedactor;
 use Sputnik\Secret\SecretRegistry;
@@ -170,6 +172,8 @@ final class SecretMaskingTest extends TestCase
             'variables' => ['secrets' => ['apiToken' => self::SECRET]],
         ]);
 
+        $channel = new OutputChannel();
+
         $metadata = new TaskMetadata($task::class, new Task(name: 'test:secret'));
 
         $discovery = $this->createMock(TaskDiscovery::class);
@@ -200,6 +204,8 @@ final class SecretMaskingTest extends TestCase
             workingDir: sys_get_temp_dir(),
             contextName: 'test',
             secrets: $registry,
+            shellExecutor: new ShellExecutor($channel),
+            outputChannel: $channel,
         );
 
         return $runner->run('test:secret', output: $output, sputnikOutput: new SputnikOutput($output, '0.0.0', 'test', 'test'));

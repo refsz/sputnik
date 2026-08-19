@@ -7,6 +7,7 @@ namespace Sputnik\Task;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Sputnik\Console\ConsoleLogger;
+use Sputnik\Console\OutputChannel;
 use Sputnik\Console\ShellCallCounter;
 use Sputnik\Console\SputnikOutput;
 use Sputnik\Environment\EnvironmentDetector;
@@ -16,6 +17,7 @@ use Sputnik\Event\TaskFailedEvent;
 use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\ShouldNotHappenException;
 use Sputnik\Executor\EnvironmentAwareExecutor;
+use Sputnik\Executor\ExecutorInterface;
 use Sputnik\Executor\ShellExecutor;
 use Sputnik\Secret\SecretRegistry;
 use Sputnik\Template\TemplateConfig;
@@ -40,6 +42,8 @@ final class TaskRunner implements TaskRunnerInterface
         private readonly string $workingDir,
         private readonly string $contextName = 'local',
         private readonly ?EnvironmentDetector $environmentDetector = null,
+        private readonly ExecutorInterface $shellExecutor = new ShellExecutor(),
+        private readonly OutputChannel $outputChannel = new OutputChannel(),
         private readonly SecretRegistry $secrets = new SecretRegistry(),
     ) {
         $this->optionCoercer = new OptionCoercer();
@@ -62,6 +66,10 @@ final class TaskRunner implements TaskRunnerInterface
 
         if (!$metadata instanceof TaskMetadata) {
             throw TaskNotFoundException::forTask($taskName);
+        }
+
+        if ($output instanceof OutputInterface) {
+            $this->outputChannel->set($output, $sputnikOutput);
         }
 
         // Create logger - use ConsoleLogger if output provided, otherwise fallback
@@ -161,11 +169,9 @@ final class TaskRunner implements TaskRunnerInterface
         $resolvedOptions = $this->optionCoercer->resolveOptions($metadata, $options);
         $resolvedArguments = $this->optionCoercer->resolveArguments($metadata, $arguments);
 
-        $shellExecutor = match (true) {
-            $sputnikOutput instanceof SputnikOutput => new ShellExecutor(sputnikOutput: $sputnikOutput),
-            $output instanceof OutputInterface => new ShellExecutor($output),
-            default => new ShellExecutor(),
-        };
+        // One executor for tasks and listeners alike; it writes to the channel,
+        // which this run has already pointed at the console.
+        $shellExecutor = $this->shellExecutor;
 
         // Wrap executor for environment-aware routing
         if ($this->environmentDetector instanceof EnvironmentDetector) {

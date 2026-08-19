@@ -631,6 +631,59 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringNotContainsString('[a]', $result->getOutput());
     }
 
+    public function testAListenerCommandIsVisibleOnAContextSwitch(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            contexts:
+                dev:
+                    description: Dev
+                prod:
+                    description: Prod
+
+            defaults:
+                context: dev
+            NEON);
+
+        // A listener runs outside any task, so before the output channel
+        // existed its command produced no output at all - which is why
+        // listeners in the field fell back to echo.
+        $listenerDir = $this->tempDir . '/sputnik';
+        if (!is_dir($listenerDir)) {
+            mkdir($listenerDir, 0755, true);
+        }
+
+        file_put_contents($listenerDir . '/NoisyListener.php', <<<'PHP'
+            <?php
+            declare(strict_types=1);
+
+            use Sputnik\Attribute\AsListener;
+            use Sputnik\Event\ContextSwitchedEvent;
+            use Sputnik\Executor\ExecutorInterface;
+
+            #[AsListener(event: ContextSwitchedEvent::class, environment: 'host')]
+            final class NoisyListener
+            {
+                public function __construct(private readonly ExecutorInterface $executor)
+                {
+                }
+
+                public function __invoke(ContextSwitchedEvent $event): void
+                {
+                    $this->executor->execute(['echo', 'FROM-LISTENER-SHELL']);
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['context:switch', 'prod'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('FROM-LISTENER-SHELL', $result->getOutput());
+    }
+
     // ── Secret masking ──────────────────────────────────────────
 
     public function testSecretIsMaskedInOutput(): void

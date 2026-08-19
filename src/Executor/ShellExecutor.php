@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sputnik\Executor;
 
+use Sputnik\Console\OutputChannel;
 use Sputnik\Console\SputnikOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
@@ -15,9 +16,8 @@ final class ShellExecutor implements ExecutorInterface
     private ?Process $activeProcess = null;
 
     public function __construct(
-        private readonly ?OutputInterface $output = null,
+        private readonly OutputChannel $channel = new OutputChannel(),
         private readonly float $defaultTimeout = self::DEFAULT_TIMEOUT,
-        private readonly ?SputnikOutput $sputnikOutput = null,
     ) {
     }
 
@@ -41,7 +41,7 @@ final class ShellExecutor implements ExecutorInterface
         $tty = $options['tty'] ?? false;
         $timeout = $tty ? 0 : ($options['timeout'] ?? $this->defaultTimeout);
 
-        $this->sputnikOutput?->command($display);
+        $this->channel->sputnikOutput()?->command($display);
 
         $startTime = microtime(true);
 
@@ -69,7 +69,7 @@ final class ShellExecutor implements ExecutorInterface
         $duration = microtime(true) - $startTime;
         $exitCode = $process->getExitCode() ?? 1;
 
-        $this->sputnikOutput?->commandDone($duration, $exitCode);
+        $this->channel->sputnikOutput()?->commandDone($duration, $exitCode);
 
         return new ExecutionResult(
             exitCode: $exitCode,
@@ -139,13 +139,13 @@ final class ShellExecutor implements ExecutorInterface
 
     private function streamOutput(string $buffer, bool $isError): void
     {
-        $target = $this->sputnikOutput?->getOutput() ?? $this->output;
+        $target = $this->channel->output();
 
         if (!$target instanceof OutputInterface) {
             return;
         }
 
-        if ($this->sputnikOutput instanceof SputnikOutput) {
+        if ($this->channel->sputnikOutput() instanceof SputnikOutput) {
             $indented = '  ' . str_replace("\n", "\n  ", rtrim($buffer, "\n")) . "\n";
             $target->write($indented, false, OutputInterface::OUTPUT_RAW);
         } elseif ($isError) {

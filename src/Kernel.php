@@ -14,6 +14,7 @@ use Sputnik\Console\Command\ContextSwitchCommand;
 use Sputnik\Console\Command\InitCommand;
 use Sputnik\Console\Command\RunCommand;
 use Sputnik\Console\Command\TaskCommand;
+use Sputnik\Console\OutputChannel;
 use Sputnik\Context\ContextManager;
 use Sputnik\DependencyInjection\ContainerFactory;
 use Sputnik\Environment\EnvironmentDetector;
@@ -124,6 +125,11 @@ final class Kernel
     public function getSecretRedactor(): SecretRedactor
     {
         return $this->container->getByType(SecretRedactor::class);
+    }
+
+    public function getOutputChannel(): OutputChannel
+    {
+        return $this->container->getByType(OutputChannel::class);
     }
 
     public function getSecretRegistry(): SecretRegistry
