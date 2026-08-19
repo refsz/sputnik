@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sputnik\Console\Command;
 
-use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -21,6 +20,11 @@ final class InitCommand extends Command
     private const CONFIG_FILE = '.sputnik.dist.neon';
 
     private const TASKS_DIR = 'sputnik';
+
+    public function __construct(private readonly string $targetDir)
+    {
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
@@ -46,8 +50,6 @@ final class InitCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $force = $input->getOption('force');
-        $cwdResult = getcwd();
-        $cwd = $cwdResult !== false ? $cwdResult : throw new SputnikRuntimeException('Could not determine working directory');
 
         $io->title('Initializing Sputnik project');
 
@@ -55,7 +57,7 @@ final class InitCommand extends Command
         $skipped = [];
 
         // Create config file
-        $configPath = $cwd . '/' . self::CONFIG_FILE;
+        $configPath = $this->targetDir . '/' . self::CONFIG_FILE;
         if (!file_exists($configPath) || $force === true) {
             if (file_put_contents($configPath, $this->getConfigTemplate()) === false) {
                 $io->error('Could not write ' . $configPath);
@@ -69,7 +71,7 @@ final class InitCommand extends Command
         }
 
         // Create tasks directory
-        $tasksDir = $cwd . '/' . self::TASKS_DIR;
+        $tasksDir = $this->targetDir . '/' . self::TASKS_DIR;
         if (!is_dir($tasksDir)) {
             if (!mkdir($tasksDir, 0755, true) && !is_dir($tasksDir)) {
                 $io->error('Could not create directory ' . $tasksDir);

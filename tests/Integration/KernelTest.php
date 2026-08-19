@@ -16,6 +16,7 @@ use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateEngine;
 use Sputnik\Tests\Support\TestCase;
 use Sputnik\Variable\VariableResolver;
+use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final class KernelTest extends TestCase
@@ -158,6 +159,30 @@ NEON;
         $this->assertTrue($app->has('run'));
         $this->assertTrue($app->has('context:list'));
         $this->assertTrue($app->has('context:switch'));
+    }
+
+    public function testKernelGivesInitTheWorkingDirectoryItWasBuiltWith(): void
+    {
+        $elsewhere = $this->createTempDir();
+        $previous = getcwd();
+
+        if ($previous === false) {
+            self::fail('Could not determine the current directory');
+        }
+
+        chdir($elsewhere);
+
+        try {
+            $kernel = new Kernel(workingDir: $this->tempDir);
+            $tester = new CommandTester($kernel->createApplication()->get('init'));
+            $tester->execute([]);
+
+            $this->assertFileExists($this->tempDir . '/.sputnik.dist.neon');
+            $this->assertSame(['.', '..'], scandir($elsewhere));
+        } finally {
+            chdir($previous);
+            $this->removeTempDir($elsewhere);
+        }
     }
 
     public function testKernelRegistersTasksAsCommands(): void

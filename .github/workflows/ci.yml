@@ -52,6 +52,44 @@ jobs:
           name: coverage-report
           path: coverage/clover.xml
 
+  phar:
+    name: PHAR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Box derives the version from the nearest tag, so a shallow clone
+          # would leave @package_version@ in the binary.
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          ini-values: phar.readonly=0
+          coverage: none
+
+      - name: Install Box
+        run: composer global require humbug/box
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+
+      - name: Build PHAR
+        run: box compile
+
+      - name: Smoke test PHAR
+        run: .github/scripts/smoke-phar.sh build/sputnik.phar
+
+      # tests/E2E runs against the built archive and skips itself when there is
+      # none, so it has never run in CI. The dev dependencies are restored after
+      # the build because the PHAR must not contain them.
+      - name: Restore dev dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run E2E tests against the PHAR
+        run: vendor/bin/phpunit --testsuite e2e --no-coverage
+
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
