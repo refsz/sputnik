@@ -11,6 +11,18 @@ use Sputnik\Secret\SecretRegistry;
 final class VariableResolver implements VariableResolverInterface
 {
     /**
+     * The key each secret type requires - a definition missing it is not a
+     * valid definition of that type, it is an arbitrary map (e.g. a nested
+     * map of unrelated credentials) that happens to have no 'type' key and
+     * would otherwise default to 'command' and silently resolve to null.
+     */
+    private const REQUIRED_KEY_BY_TYPE = [
+        'command' => 'command',
+        'script' => 'script',
+        'env' => 'name',
+    ];
+
+    /**
      * @var array<string, mixed>
      */
     private array $resolved = [];
@@ -248,18 +260,6 @@ final class VariableResolver implements VariableResolverInterface
 
         return $context['variables']['constants'] ?? [];
     }
-
-    /**
-     * The key each secret type requires - a definition missing it is not a
-     * valid definition of that type, it is an arbitrary map (e.g. a nested
-     * map of unrelated credentials) that happens to have no 'type' key and
-     * would otherwise default to 'command' and silently resolve to null.
-     */
-    private const REQUIRED_KEY_BY_TYPE = [
-        'command' => 'command',
-        'script' => 'script',
-        'env' => 'name',
-    ];
 
     private function assertSupportedSecretType(string $name, mixed $definition): void
     {
