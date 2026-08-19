@@ -165,6 +165,22 @@ body {
     font-size: 0.65rem;
 }
 
+/*
+ * Material paints its sticky nav labels - the section label and the table of
+ * contents heading - with the flat --md-default-bg-color plus a same-coloured
+ * shadow, so that links scrolling underneath disappear behind them. That only
+ * blends in on a flat background; this page background is an animated gradient,
+ * which turned both labels into visible boxes with a halo. Frosting adapts to
+ * whatever is actually behind: invisible against the page, and still legible
+ * once nav items scroll past.
+ */
+[data-md-color-scheme="slate"] .md-nav--lifted > .md-nav__list > .md-nav__item--active > .md-nav__link,
+[data-md-color-scheme="slate"] .md-sidebar--secondary .md-nav__title {
+    background-color: transparent;
+    box-shadow: none;
+    backdrop-filter: blur(8px);
+}
+
 /* -- Typography ----------------------------------------------------------- */
 
 .md-typeset h1,
