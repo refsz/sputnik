@@ -42,7 +42,7 @@
 ## Requirements
 
 !!! note
-    PHP 8.2 or higher is required.
+    PHP 8.3 or higher is required.
 
 ## Next
 
