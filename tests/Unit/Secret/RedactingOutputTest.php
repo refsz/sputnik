@@ -85,10 +85,14 @@ final class RedactingOutputTest extends TestCase
         $registry->declareSecrets(['apiToken']);
         $registry->remember('apiToken', 'ghp_abcdefghij');
 
+        $errorBuffer = new BufferedOutput();
         $console = new ConsoleOutput();
-        $decorated = new RedactingConsoleOutput($console, new SecretRedactor($registry));
+        $console->setErrorOutput($errorBuffer);
 
-        $this->assertInstanceOf(RedactingOutput::class, $decorated->getErrorOutput());
+        $decorated = new RedactingConsoleOutput($console, new SecretRedactor($registry));
+        $decorated->getErrorOutput()->writeln('token ghp_abcdefghij');
+
+        $this->assertSame("token ***\n", $errorBuffer->fetch());
     }
 
     public function testMixedIterableRedactsStringable(): void

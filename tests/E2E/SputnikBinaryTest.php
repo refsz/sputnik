@@ -592,6 +592,41 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('***', $result->getOutput());
     }
 
+    public function testFailingCommandWithSecretIsMaskedOnBothChannels(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            variables:
+                secrets:
+                    apiToken: ghp_abcdefghij
+            NEON);
+
+        $this->writeTask('leaky', <<<'PHP'
+            #[Task(name: 'leaky', description: 'Fails while carrying a secret')]
+            final class LeakyTask implements TaskInterface
+            {
+                public function __invoke(TaskContext $ctx): TaskResult
+                {
+                    $ctx->shell('echo {{! apiToken }} >&2 && exit 7')->assertSuccess();
+
+                    return TaskResult::success();
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['leaky'], $this->tempDir);
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $output = $result->getOutput();
+        $errorOutput = $result->getErrorOutput();
+        $this->assertStringNotContainsString('ghp_abcdefghij', $output);
+        $this->assertStringNotContainsString('ghp_abcdefghij', $errorOutput);
+        $this->assertStringContainsString('***', $output . $errorOutput);
+    }
+
     // ── Helpers ─────────────────────────────────────────────────
 
     /**
