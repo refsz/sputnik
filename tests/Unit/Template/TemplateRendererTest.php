@@ -6,6 +6,7 @@ namespace Sputnik\Tests\Unit\Template;
 
 use PHPUnit\Framework\TestCase;
 use Sputnik\Template\Exception\MissingVariableException;
+use Sputnik\Template\ShellArgumentValueFormatter;
 use Sputnik\Template\TemplateParser;
 use Sputnik\Template\TemplateRenderer;
 use Sputnik\Tests\Support\Doubles\InMemoryVariableResolver;
@@ -194,6 +195,48 @@ final class TemplateRendererTest extends TestCase
         $this->assertCount(2, $missing);
         $this->assertContains('missing1', $missing);
         $this->assertContains('missing2', $missing);
+    }
+
+    public function testNullValueFallsBackToDefault(): void
+    {
+        $this->variables->set('port', null);
+
+        $result = $this->renderer->render('Port: {{ port | "3306" }}');
+
+        $this->assertSame('Port: 3306', $result);
+    }
+
+    public function testRequiredVariableWithNullValueAndDefaultDoesNotThrow(): void
+    {
+        $this->variables->set('port', null);
+
+        $result = $this->renderer->render('{{! port | "3306" }}');
+
+        $this->assertSame('3306', $result);
+    }
+
+    public function testCanRenderReturnsFalseWhenRequiredVariableIsNull(): void
+    {
+        $this->variables->set('apiKey', null);
+
+        $this->assertFalse($this->renderer->canRender('{{! apiKey }}'));
+    }
+
+    public function testGetMissingVariablesReportsNullValuedRequiredVariable(): void
+    {
+        $this->variables->set('apiKey', null);
+
+        $this->assertSame(['apiKey'], $this->renderer->getMissingVariables('{{! apiKey }}'));
+    }
+
+    public function testWithFormatterReturnsANewRendererAndLeavesTheOriginalUntouched(): void
+    {
+        $this->variables->set('host', 'my server');
+
+        $shell = $this->renderer->withFormatter(new ShellArgumentValueFormatter());
+
+        $this->assertSame("connect 'my server'", $shell->render('connect {{ host }}'));
+        $this->assertSame('connect my server', $this->renderer->render('connect {{ host }}'));
     }
 
     public function testPreservesWhitespace(): void

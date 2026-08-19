@@ -39,13 +39,17 @@ DEBUG={{ debug | "false" }}
 LOG_LEVEL={{ logLevel | 'info' }}
 ```
 
-**Required variable (fails if missing or empty):**
+**Required variable (fails if missing or null):**
 ```
 API_KEY={{! apiKey }}
 ```
 
 !!! warning
     If a required variable is not defined, template rendering will fail with an error. The task will not execute.
+
+A variable that resolves to `null` counts as not defined: `{{ name | "default" }}`
+then falls back to the default, and `{{! name }}` fails. An empty string is a
+value and is rendered as such.
 
 **Escape literal braces:**
 ```

@@ -122,6 +122,30 @@ $ctx->get('varName');            // resolve a variable
 $ctx->get('varName', 'default'); // with fallback default
 ```
 
+### Template Strings
+
+`render()` substitutes variables in any string, with the same syntax a template
+file uses -- `{{ name }}`, `{{! required }}`, `{{ name | "default" }}`.
+
+The renderer comes from the template engine, so a string renders exactly like a
+template file would: same parser, same variables. On top of that it sees the
+runtime overrides of the current run (`-D` / `--define`), which template files
+do not, because those are rendered before the task starts.
+
+```php
+$content = $ctx->render(file_get_contents('templates/config.yaml'));
+file_put_contents('.ddev/config.yaml', $content);
+```
+
+Values are inserted verbatim, nothing is escaped -- unlike `shell()`. A missing
+`{{! required }}` variable throws `MissingVariableException`, a missing optional
+one renders as an empty string.
+
+Use it when a task has to produce file content itself, for example when it wipes
+a directory that configured templates were rendered into and has to put them
+back within the same run. Templates declared under `templates:` are still
+rendered automatically before the first task runs.
+
 ### Options and Arguments
 
 ```php
@@ -142,6 +166,23 @@ $ctx->shellRaw('docker compose up'); // (2)!
 
 1. Variables in `{{ }}` are resolved and wrapped with `escapeshellarg()` to prevent injection.
 2. Command is passed directly to the shell. Use when you need pipes, redirects, or exact control.
+
+`shell()` uses the same template syntax as `render()` and template files, so
+`{{! required }}` and `{{ name | "default" }}` work in commands too, and
+`\{\{ ... \}\}` stays literal. A missing `{{! required }}` variable throws
+`MissingVariableException` and the command is not executed. A missing optional
+variable becomes an empty, quoted argument (`''`), so it keeps its position in
+the command instead of disappearing.
+
+!!! warning "Commands with their own `{{ }}` syntax"
+    Go templates in `docker` and `kubectl` share the delimiters. `{{.State.Running}}`
+    and `{{range .items}}` are left alone because they do not look like a variable
+    name, but a bare action like `{{end}}` does and is replaced. Use `shellRaw()`
+    for such commands, or escape the braces as `\{\{end\}\}`.
+
+    ```php
+    $ctx->shellRaw('docker inspect -f "{{range .items}}{{.Name}}{{end}}" app');
+    ```
 
 Both methods accept an options array:
 
