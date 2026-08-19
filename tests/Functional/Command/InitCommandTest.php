@@ -60,6 +60,45 @@ final class InitCommandTest extends TestCase
         }
     }
 
+    public function testInitIgnoresTheGeneratedStateDirectory(): void
+    {
+        $tester = $this->tester();
+        $tester->execute([]);
+
+        // Nette compiles the container into .sputnik/cache on the first run, so
+        // without this a fresh project commits generated code on its first push.
+        $this->assertFileExists($this->tempDir . '/.gitignore');
+
+        $ignored = (string) file_get_contents($this->tempDir . '/.gitignore');
+
+        $this->assertStringContainsString('/.sputnik/', $ignored);
+        $this->assertStringContainsString('/.sputnik.neon', $ignored);
+    }
+
+    public function testInitAppendsToAnExistingGitignoreWithoutTouchingIt(): void
+    {
+        file_put_contents($this->tempDir . '/.gitignore', "/vendor/\n");
+
+        $tester = $this->tester();
+        $tester->execute([]);
+
+        $ignored = (string) file_get_contents($this->tempDir . '/.gitignore');
+
+        $this->assertStringStartsWith("/vendor/\n", $ignored);
+        $this->assertStringContainsString('/.sputnik/', $ignored);
+    }
+
+    public function testInitLeavesAGitignoreThatAlreadyCoversSputnikAlone(): void
+    {
+        $existing = "/vendor/\n/.sputnik/\n/.sputnik.neon\n";
+        file_put_contents($this->tempDir . '/.gitignore', $existing);
+
+        $tester = $this->tester();
+        $tester->execute([]);
+
+        $this->assertSame($existing, file_get_contents($this->tempDir . '/.gitignore'));
+    }
+
     public function testInitSkipsExistingFiles(): void
     {
         file_put_contents($this->tempDir . '/.sputnik.dist.neon', 'existing');

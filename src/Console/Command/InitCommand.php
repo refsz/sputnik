@@ -21,6 +21,15 @@ final class InitCommand extends Command
 
     private const TASKS_DIR = 'sputnik';
 
+    private const IGNORE_FILE = '.gitignore';
+
+    /**
+     * Sputnik writes these itself: the compiled container and the persisted
+     * context under .sputnik/, and .sputnik.neon as the local override of the
+     * committed .sputnik.dist.neon.
+     */
+    private const array IGNORED_PATHS = ['/.sputnik/', '/.sputnik.neon'];
+
     public function __construct(private readonly string $targetDir)
     {
         parent::__construct();
@@ -96,6 +105,19 @@ final class InitCommand extends Command
             $skipped[] = self::TASKS_DIR . '/ExampleTask.php';
         }
 
+        $ignorePath = $this->targetDir . '/' . self::IGNORE_FILE;
+        $hadIgnoreFile = file_exists($ignorePath);
+
+        if (!$this->ignoreGeneratedFiles($ignorePath)) {
+            $io->error('Could not write ' . $ignorePath);
+
+            return Command::FAILURE;
+        }
+
+        if (!$hadIgnoreFile) {
+            $created[] = self::IGNORE_FILE;
+        }
+
         // Report results
         if ($created !== []) {
             $io->success('Created:');
@@ -117,6 +139,41 @@ final class InitCommand extends Command
         ]);
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * Add the paths Sputnik generates to .gitignore, creating the file if the
+     * project has none. An existing file is only ever appended to, and only
+     * with the entries it does not already have.
+     */
+    private function ignoreGeneratedFiles(string $path): bool
+    {
+        if (!file_exists($path)) {
+            return file_put_contents($path, implode("\n", self::IGNORED_PATHS) . "\n") !== false;
+        }
+
+        $existing = file_get_contents($path);
+
+        if ($existing === false) {
+            return false;
+        }
+
+        $lines = preg_split('/\R/', $existing);
+
+        if ($lines === false) {
+            return false;
+        }
+
+        $missing = array_values(array_diff(self::IGNORED_PATHS, array_map(trim(...), $lines)));
+
+        if ($missing === []) {
+            return true;
+        }
+
+        $leadingNewline = str_ends_with($existing, "\n") ? '' : "\n";
+        $block = $leadingNewline . "\n# Sputnik\n" . implode("\n", $missing) . "\n";
+
+        return file_put_contents($path, $block, \FILE_APPEND) !== false;
     }
 
     private function getConfigTemplate(): string
@@ -150,6 +207,17 @@ contexts:
 variables:
     constants:
         app_name: MyApp
+
+    # Values Sputnik must never print. Every occurrence is replaced with *** in
+    # echoed commands, command output and log lines.
+    # secrets:
+    #     apiToken:
+    #         type: command
+    #         command: "pass show project/api"
+
+# Route tasks marked environment: 'container' through a container executor.
+# environment:
+#     executor: [ddev, exec]
 
 defaults:
     context: local
@@ -190,13 +258,17 @@ final class ExampleTask implements TaskInterface
         $context = $ctx->getContextName();
 
         $ctx->success("Hello, {$name}!");
-        $ctx->info("App: {$appName}");
-        $ctx->info("Context: {$context}");
+        $ctx->writeln("App: {$appName}");
+        $ctx->writeln("Context: {$context}");
+
+        // info(), warning() and error() go to the log, which is only shown
+        // with -v. Use writeln() or success() for output the user should see.
+        $ctx->info('This line needs -v to appear');
 
         // Run a program without a shell (uncomment to try). Arguments are
         // passed through as they are, so nothing needs escaping.
         // $result = $ctx->exec(['echo', 'Hello from {{ app_name }}']);
-        // $ctx->info($result->output);
+        // $ctx->writeln($result->getOutput());
 
         return TaskResult::success("Greeted {$name}");
     }
