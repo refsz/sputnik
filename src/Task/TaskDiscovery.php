@@ -11,14 +11,26 @@ use Sputnik\Support\PhpFileParser;
 
 final class TaskDiscovery
 {
+    /**
+     * Names that carry the CLI itself. A task cannot take one of these, because
+     * losing `list` or `run` would leave no way to reach the others.
+     */
     private const RESERVED_NAMES = [
-        'init',
         'run',
         'list',
         'help',
         'completion',
         'context:switch',
         'context:list',
+    ];
+
+    /**
+     * Built-ins a project may take over. Scaffolding a project happens once;
+     * a project command by the same name may well be a daily one, so the
+     * project wins and the shadowing is reported.
+     */
+    private const SHADOWABLE_NAMES = [
+        'init',
     ];
 
     private const RESERVED_OPTIONS = [
@@ -41,6 +53,11 @@ final class TaskDiscovery
     private bool $discovered = false;
 
     /**
+     * @var list<string>
+     */
+    private array $warnings = [];
+
+    /**
      * @param array<string>      $directories Directories to scan for tasks
      * @param list<class-string> $classes     Explicit task classes to register
      */
@@ -56,15 +73,32 @@ final class TaskDiscovery
      *
      * @param array<string, TaskMetadata> $tasks
      * @param array<string, string>       $aliasMap
+     * @param list<string>                $warnings
      */
-    public static function withPreloadedData(array $tasks, array $aliasMap): self
+    public static function withPreloadedData(array $tasks, array $aliasMap, array $warnings = []): self
     {
         $instance = new self([]);
         $instance->tasks = $tasks;
         $instance->aliasMap = $aliasMap;
+        $instance->warnings = $warnings;
         $instance->discovered = true;
 
         return $instance;
+    }
+
+    /**
+     * Problems that made discovery skip something, or that changed which
+     * command a name resolves to. Carried through the container cache, because
+     * discovery only runs when that cache is cold - a warning shown once and
+     * then forgotten would be worse than none.
+     *
+     * @return list<string>
+     */
+    public function getWarnings(): array
+    {
+        $this->discoverAll();
+
+        return $this->warnings;
     }
 
     /**
@@ -204,10 +238,22 @@ final class TaskDiscovery
         );
 
         if (\in_array($taskAttribute->name, self::RESERVED_NAMES, true)) {
-            throw new TaskDiscoveryException(\sprintf(
-                "Task name '%s' is reserved by a built-in command",
+            $this->warnings[] = \sprintf(
+                "Skipped task '%s' in %s: the name is reserved by a built-in command - rename the task or give it a group prefix",
                 $taskAttribute->name,
-            ));
+                $reflection->getFileName() !== false ? $reflection->getFileName() : $className,
+            );
+
+            return;
+        }
+
+        if (\in_array($taskAttribute->name, self::SHADOWABLE_NAMES, true)) {
+            $this->warnings[] = \sprintf(
+                "Task '%s' in %s shadows the built-in %s command, which is no longer reachable",
+                $taskAttribute->name,
+                $reflection->getFileName() !== false ? $reflection->getFileName() : $className,
+                $taskAttribute->name,
+            );
         }
 
         if (isset($this->tasks[$taskAttribute->name])) {
@@ -232,11 +278,15 @@ final class TaskDiscovery
         // Register aliases
         foreach ($taskAttribute->aliases as $alias) {
             if (\in_array($alias, self::RESERVED_NAMES, true)) {
-                throw new TaskDiscoveryException(\sprintf(
-                    "Alias '%s' on task '%s' is reserved by a built-in command",
+                // Only the alias is dropped: the task itself is fine, and
+                // taking it away over a secondary name would help nobody.
+                $this->warnings[] = \sprintf(
+                    "Dropped alias '%s' on task '%s': the name is reserved by a built-in command",
                     $alias,
                     $taskAttribute->name,
-                ));
+                );
+
+                continue;
             }
 
             if (isset($this->tasks[$alias])) {

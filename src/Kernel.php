@@ -84,6 +84,13 @@ final class Kernel
             $app->addCommand($command);
         }
 
+        // A task the discovery had to skip, or a built-in a project task took
+        // over. Reported on every run, not just the one that filled the cache,
+        // and through the shared channel so it lands wherever output goes.
+        foreach ($taskDiscovery->getWarnings() as $warning) {
+            $this->getOutputChannel()->comment($warning);
+        }
+
         return $app;
     }
 

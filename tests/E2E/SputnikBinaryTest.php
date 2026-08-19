@@ -403,12 +403,39 @@ final class SputnikBinaryTest extends TestCase
         $this->assertNotSame(0, $result->getExitCode());
     }
 
-    public function testReservedTaskNameShowsError(): void
+    public function testAProjectTaskMayTakeTheInitName(): void
     {
         $this->scaffoldProject([
             'init' => <<<'PHP'
-                #[Task(name: 'init', description: 'Collides with built-in')]
+                #[Task(name: 'init', description: 'The project has its own init')]
                 final class InitTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('project init ran');
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['init'], $this->tempDir);
+        $output = $result->getOutput() . $result->getErrorOutput();
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('project init ran', $output);
+        $this->assertStringContainsString('shadows', $output);
+        $this->assertStringNotContainsString('Initializing Sputnik project', $output);
+    }
+
+    public function testAReservedNameSkipsOnlyThatTaskAndKeepsTheCliUsable(): void
+    {
+        // This used to abort the whole CLI: no task ran, not even `list`.
+        $this->scaffoldProject([
+            'list' => <<<'PHP'
+                #[Task(name: 'list', description: 'Collides with a built-in')]
+                final class ListTask implements TaskInterface
                 {
                     public function __invoke(TaskContext $ctx): TaskResult
                     {
@@ -416,13 +443,31 @@ final class SputnikBinaryTest extends TestCase
                     }
                 }
                 PHP,
+            'deploy' => <<<'PHP'
+                #[Task(name: 'deploy', description: 'Unrelated to the collision')]
+                final class DeployTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('deploy ran');
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
         ]);
 
-        $result = $this->sputnik(['list'], $this->tempDir);
+        $listed = $this->sputnik(['list'], $this->tempDir);
+        $listedOutput = $listed->getOutput() . $listed->getErrorOutput();
 
-        $this->assertNotSame(0, $result->getExitCode());
-        $output = $result->getOutput() . $result->getErrorOutput();
-        $this->assertStringContainsString('reserved', $output);
+        $this->assertSame(0, $listed->getExitCode());
+        $this->assertStringContainsString('Skipped task', $listedOutput);
+        $this->assertStringContainsString('rename', $listedOutput);
+
+        $unrelated = $this->sputnik(['deploy'], $this->tempDir);
+
+        $this->assertSame(0, $unrelated->getExitCode());
+        $this->assertStringContainsString('deploy ran', $unrelated->getOutput());
     }
 
     // ── Aliases ─────────────────────────────────────────────────

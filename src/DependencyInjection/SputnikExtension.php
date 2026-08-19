@@ -114,6 +114,7 @@ final class SputnikExtension extends CompilerExtension
             ->setFactory(TaskDiscovery::class . '::withPreloadedData', [
                 $taskDiscovery->discoverAll(),
                 $taskDiscovery->getAliasMap(),
+                $taskDiscovery->getWarnings(),
             ])
             ->setAutowired(true);
 

@@ -131,9 +131,30 @@ Restart your shell or source the completion file to activate.
 
 ### Task Names
 
-The following names are reserved for built-in commands and cannot be used as task names or aliases:
+These names carry the CLI itself and cannot be taken by a task or an alias:
 
-`init`, `run`, `list`, `help`, `completion`, `context:switch`, `context:list`
+`run`, `list`, `help`, `completion`, `context:switch`, `context:list`
+
+A task that uses one is **skipped**, with a warning naming its file. Every other
+task keeps working -- losing `list` would leave no way to reach them:
+
+```
+Skipped task 'list' in /project/sputnik/ListTask.php: the name is reserved by a
+built-in command - rename the task or give it a group prefix
+```
+
+`init` is different: a project task may take it, and then the built-in scaffold
+is no longer reachable. Scaffolding a project happens once, while a project
+command called `init` may well be a daily one, so the project wins -- and says
+so:
+
+```
+Task 'init' in /project/sputnik/InitTask.php shadows the built-in init command,
+which is no longer reachable
+```
+
+Both warnings appear on every run, not only the one that filled the container
+cache.
 
 ### Option Names
 
