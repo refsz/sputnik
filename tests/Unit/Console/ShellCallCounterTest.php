@@ -30,7 +30,7 @@ final class ShellCallCounterTest extends TestCase
             class MyTask {
                 public function __invoke($ctx) {
                     $ctx->shell('echo hello');
-                    $ctx->shellRaw('docker exec bash');
+                    $ctx->exec(['docker', 'exec', 'bash']);
                     return TaskResult::success();
                 }
             }
@@ -81,7 +81,7 @@ final class ShellCallCounterTest extends TestCase
             }
             PHP);
 
-        // runTask is not a shell call — should only count shell/shellRaw
+        // runTask is not a shell call — should only count shell/exec
         $this->assertSame(1, ShellCallCounter::count($file));
     }
 
@@ -99,7 +99,7 @@ final class ShellCallCounterTest extends TestCase
                     $ctx->shell('echo 1');
                     $ctx->shell('echo 2');
                     $ctx->shell('echo 3');
-                    $ctx->shellRaw('raw cmd');
+                    $ctx->exec(['raw', 'cmd']);
                     return TaskResult::success();
                 }
             }
@@ -115,7 +115,7 @@ final class ShellCallCounterTest extends TestCase
             class MyTask {
                 public function __invoke($ctx) {
                     $ctx?->shell('echo hello');
-                    $ctx?->shellRaw('ls');
+                    $ctx?->exec(['ls']);
                     return TaskResult::success();
                 }
             }

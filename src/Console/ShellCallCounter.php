@@ -22,12 +22,12 @@ final class ShellCallCounter
         $tokenCount = \count($tokens);
 
         for ($i = 0; $i < $tokenCount; ++$i) {
-            // Look for ->shell( or ->shellRaw(
+            // Look for ->shell( or ->exec(
             if (!self::isObjectOperator($tokens[$i])) {
                 continue;
             }
 
-            // Next non-whitespace token should be 'shell' or 'shellRaw'
+            // Next non-whitespace token should be 'shell' or 'exec'
             $next = self::skipWhitespace($tokens, $i + 1, $tokenCount);
             if ($next === null) {
                 continue;
@@ -42,7 +42,7 @@ final class ShellCallCounter
             }
 
             $methodName = $tokens[$next][1];
-            if ($methodName !== 'shell' && $methodName !== 'shellRaw') {
+            if ($methodName !== 'shell' && $methodName !== 'exec') {
                 continue;
             }
 

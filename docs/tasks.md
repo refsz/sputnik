@@ -24,7 +24,7 @@ final class MigrateTask implements TaskInterface
 {
     public function __invoke(TaskContext $ctx): TaskResult
     {
-        $ctx->shellRaw('vendor/bin/drush updatedb --yes');
+        $ctx->exec(['vendor/bin/drush', 'updatedb', '--yes']);
         return TaskResult::success();
     }
 }
@@ -157,15 +157,18 @@ $ctx->getArguments();       // get all arguments as array
 
 ### Shell Execution
 
-`shell()` interpolates variables and escapes them. `shellRaw()` runs the command as-is.
+`exec()` runs a program with arguments and no shell. `shell()` runs a command line through a shell.
 
 ```php
-$ctx->shell('echo {{ VAR }}');       // (1)!
-$ctx->shellRaw('docker compose up'); // (2)!
+$ctx->exec(['composer', 'require', '{{ package }}']);   // (1)!
+$ctx->shell('drush sql-dump | gzip > dump.gz');          // (2)!
 ```
 
-1. Variables in `{{ }}` are resolved and wrapped with `escapeshellarg()` to prevent injection.
-2. Command is passed directly to the shell. Use when you need pipes, redirects, or exact control.
+1. A list, so the operating system receives the arguments as they are. A value containing spaces, quotes or a semicolon is one argument and nothing else -- there is no shell to reinterpret it, which is why nothing is escaped. Placeholders are substituted per element.
+2. A string, so a real shell runs it. Use it for pipes, redirects, globs and `&&`. Variables are wrapped with `escapeshellarg()` here, because a shell does read the result.
+
+Prefer `exec()`. It is the safe default: a command that needs no shell feature
+cannot be broken by one.
 
 `shell()` uses the same template syntax as `render()` and template files, so
 `{{! required }}` and `{{ name | "default" }}` work in commands too, and
@@ -177,11 +180,11 @@ the command instead of disappearing.
 !!! warning "Commands with their own `{{ }}` syntax"
     Go templates in `docker` and `kubectl` share the delimiters. `{{.State.Running}}`
     and `{{range .items}}` are left alone because they do not look like a variable
-    name, but a bare action like `{{end}}` does and is replaced. Use `shellRaw()`
-    for such commands, or escape the braces as `\{\{end\}\}`.
+    name, but a bare action like `{{end}}` does and is replaced. This applies to
+    `exec()` too, which substitutes per element -- escape the braces:
 
     ```php
-    $ctx->shellRaw('docker inspect -f "{{range .items}}{{.Name}}{{end}}" app');
+    $ctx->exec(['docker', 'inspect', '-f', '{{range .items}}{{.Name}}\{\{end\}\}', 'app']);
     ```
 
 Values of variables declared under `variables.secrets` are replaced with `***`
@@ -191,7 +194,7 @@ in the echoed command and in the command's output. See
 Both methods accept an options array:
 
 ```php
-$ctx->shellRaw('make build', [
+$ctx->exec(['make', 'build'], [
     'env' => ['APP_ENV' => 'prod'],
     'tty' => true,
     'timeout' => 60,

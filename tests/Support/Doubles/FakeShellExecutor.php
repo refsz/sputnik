@@ -16,7 +16,7 @@ final class FakeShellExecutor implements ExecutorInterface
     private array $responses = [];
 
     /**
-     * @var list<array{command: string, options: array}>
+     * @var list<array{command: list<string>|string, options: array}>
      */
     private array $executedCommands = [];
 
@@ -47,12 +47,21 @@ final class FakeShellExecutor implements ExecutorInterface
         );
     }
 
-    public function execute(string $command, array $options = []): ExecutionResult
+    /**
+     * @param list<string>|string $command
+     */
+    public function execute(array|string $command, array $options = []): ExecutionResult
     {
+        if ($command === []) {
+            throw new \InvalidArgumentException('Cannot execute an empty command list');
+        }
+
         $this->executedCommands[] = ['command' => $command, 'options' => $options];
 
-        if (isset($this->responses[$command])) {
-            return $this->responses[$command];
+        $key = \is_array($command) ? implode(' ', $command) : $command;
+
+        if (isset($this->responses[$key])) {
+            return $this->responses[$key];
         }
 
         // Default: succeed with empty output
@@ -61,7 +70,7 @@ final class FakeShellExecutor implements ExecutorInterface
             output: '',
             errorOutput: '',
             duration: 0.1,
-            command: $command,
+            command: $key,
         );
     }
 
@@ -86,7 +95,7 @@ final class FakeShellExecutor implements ExecutorInterface
     }
 
     /**
-     * @return list<array{command: string, options: array}>
+     * @return list<array{command: list<string>|string, options: array}>
      */
     public function getExecutedCommands(): array
     {

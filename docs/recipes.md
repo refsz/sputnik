@@ -14,8 +14,8 @@ final class BuildTask implements TaskInterface
 {
     public function __invoke(TaskContext $ctx): TaskResult
     {
-        $ctx->shellRaw('composer install --no-dev --optimize-autoloader');
-        $ctx->shellRaw('npm ci && npm run build');
+        $ctx->exec(['composer', 'install', '--no-dev', '--optimize-autoloader']);
+        $ctx->shell('npm ci && npm run build');
 
         return TaskResult::success();
     }
@@ -33,7 +33,7 @@ Config:
 
 ```neon
 environment:
-    executor: "docker compose exec -T app {command}"
+    executor: [docker, compose, exec, -T, app]
 ```
 
 Task:
@@ -44,7 +44,7 @@ final class MigrateTask implements TaskInterface
 {
     public function __invoke(TaskContext $ctx): TaskResult
     {
-        $ctx->shellRaw('php artisan migrate --force');
+        $ctx->exec(['php', 'artisan', 'migrate', '--force']);
 
         return TaskResult::success('Migrations applied');
     }
@@ -153,10 +153,10 @@ final class SeedTask implements TaskInterface
         $count = $ctx->option('count');
 
         if ($ctx->option('truncate')) {
-            $ctx->shellRaw("php artisan db:truncate {$table}");
+            $ctx->exec(['php', 'artisan', 'db:truncate', $table]);
         }
 
-        $ctx->shellRaw("php artisan db:seed --table={$table} --count={$count}");
+        $ctx->exec(['php', 'artisan', 'db:seed', '--table=' . $table, '--count=' . $count]);
 
         return TaskResult::success("Seeded {$table} with {$count} rows");
     }
@@ -216,7 +216,7 @@ final class DockerStartTask implements TaskInterface
 {
     public function __invoke(TaskContext $ctx): TaskResult
     {
-        $ctx->shellRaw('docker compose up -d');
+        $ctx->exec(['docker', 'compose', 'up', '-d']);
 
         return TaskResult::success();
     }

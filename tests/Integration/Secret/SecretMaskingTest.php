@@ -109,6 +109,36 @@ final class SecretMaskingTest extends TestCase
         $this->assertSame(self::SECRET, $seen);
     }
 
+    public function testExecArgumentIsMaskedInOutputButRawInTheResult(): void
+    {
+        $buffer = new BufferedOutput();
+        $registry = new SecretRegistry();
+        $output = new RedactingOutput($buffer, new SecretRedactor($registry));
+        $seen = null;
+
+        $task = new class($seen) implements TaskInterface {
+            public function __construct(private mixed &$seen)
+            {
+            }
+
+            public function __invoke(TaskContext $context): TaskResult
+            {
+                // No shell on this path, so the value reaches the program
+                // verbatim - and must still never reach the terminal.
+                $this->seen = trim($context->exec(['echo', '{{! apiToken }}'])->getOutput());
+
+                return TaskResult::success();
+            }
+        };
+
+        $this->runTask($task, $registry, $output);
+
+        $printed = $buffer->fetch();
+        $this->assertStringNotContainsString(self::SECRET, $printed);
+        $this->assertStringContainsString('***', $printed);
+        $this->assertSame(self::SECRET, $seen);
+    }
+
     public function testRenderedStringKeepsTheRealValue(): void
     {
         $buffer = new BufferedOutput();

@@ -32,44 +32,44 @@ final class EnvironmentDetectorTest extends TestCase
     {
         $detector = new EnvironmentDetector(
             detection: 'false',
-            executor: 'docker compose exec -T app {command}',
+            executor: ['docker', 'compose', 'exec', '-T', 'app'],
         );
 
-        $result = $detector->wrapCommand('composer install', 'container');
-        $this->assertSame('docker compose exec -T app composer install', $result);
+        $result = $detector->wrapCommand(['composer', 'install'], 'container');
+        $this->assertSame(['docker', 'compose', 'exec', '-T', 'app', 'composer', 'install'], $result);
     }
 
     public function testWrapCommandWhenInContainer(): void
     {
         $detector = new EnvironmentDetector(
             detection: 'true',
-            executor: 'docker compose exec -T app {command}',
+            executor: ['docker', 'compose', 'exec', '-T', 'app'],
         );
 
-        $result = $detector->wrapCommand('composer install', 'container');
-        $this->assertSame('composer install', $result);
+        $result = $detector->wrapCommand(['composer', 'install'], 'container');
+        $this->assertSame(['composer', 'install'], $result);
     }
 
     public function testWrapCommandWithHostEnvironment(): void
     {
         $detector = new EnvironmentDetector(
             detection: 'false',
-            executor: 'docker compose exec -T app {command}',
+            executor: ['docker', 'compose', 'exec', '-T', 'app'],
         );
 
-        $result = $detector->wrapCommand('docker compose up', 'host');
-        $this->assertSame('docker compose up', $result);
+        $result = $detector->wrapCommand(['docker', 'compose', 'up'], 'host');
+        $this->assertSame(['docker', 'compose', 'up'], $result);
     }
 
     public function testWrapCommandWithNullEnvironment(): void
     {
         $detector = new EnvironmentDetector(
             detection: 'false',
-            executor: 'docker compose exec -T app {command}',
+            executor: ['docker', 'compose', 'exec', '-T', 'app'],
         );
 
-        $result = $detector->wrapCommand('echo hello', null);
-        $this->assertSame('echo hello', $result);
+        $result = $detector->wrapCommand(['echo', 'hello'], null);
+        $this->assertSame(['echo', 'hello'], $result);
     }
 
     public function testContainerTaskWithoutExecutorThrows(): void
@@ -78,25 +78,25 @@ final class EnvironmentDetectorTest extends TestCase
 
         $this->expectException(SputnikRuntimeException::class);
         $this->expectExceptionMessageMatches('/executor/');
-        $detector->wrapCommand('composer install', 'container');
+        $detector->wrapCommand(['composer', 'install'], 'container');
     }
 
     public function testHostTaskInsideContainerThrows(): void
     {
         $detector = new EnvironmentDetector(
             detection: 'true',
-            executor: 'docker compose exec -T app {command}',
+            executor: ['docker', 'compose', 'exec', '-T', 'app'],
         );
 
         $this->expectException(SputnikRuntimeException::class);
         $this->expectExceptionMessageMatches('/Host task/');
-        $detector->wrapCommand('docker compose up', 'host');
+        $detector->wrapCommand(['docker', 'compose', 'up'], 'host');
     }
 
     public function testGetExecutor(): void
     {
-        $detector = new EnvironmentDetector(executor: 'ddev exec {command}');
-        $this->assertSame('ddev exec {command}', $detector->getExecutor());
+        $detector = new EnvironmentDetector(executor: ['ddev', 'exec']);
+        $this->assertSame(['ddev', 'exec'], $detector->getExecutor());
     }
 
     public function testGetExecutorReturnsNullWhenNotConfigured(): void

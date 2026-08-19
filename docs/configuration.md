@@ -171,13 +171,14 @@ Controls how Sputnik detects and executes commands inside a container or remote 
 ```neon
 environment:
     detection: "test -n $CUSTOM_VAR"
-    executor: "docker compose exec -T app_server {command}"
+    executor: [docker, compose, exec, -T, app_server]
 ```
 
 | Key | Required | Description |
 |---|---|---|
 | `detection` | no | Shell command whose exit code determines whether the current process is inside the target environment. Exit code `0` means inside. Default checks for `/.dockerenv` and `/run/.containerenv`. |
-| `executor` | required for container tasks | Command template used to run tasks inside the environment. `{command}` is replaced with the actual command string. Must be present if any task uses `environment: 'container'`. |
+| `executor` | required for container tasks | Program and arguments that run a command inside the environment, e.g. `[ddev, exec]`. Prepended to the command, so argument boundaries survive. Must be present if any task uses `environment: 'container'`. |
+| `shell` | | How to start a shell inside the executor for `shell()` commands. Default `[sh, -c]`; use `[bash, -lc]` for a login shell. |
 
 See [docs/environments.md](environments.md).
 
@@ -262,7 +263,7 @@ templates:
 
 environment:
     detection: "test -f /.dockerenv"
-    executor: "docker compose exec -T app {command}"
+    executor: [docker, compose, exec, -T, app]
 
 defaults:
     context: dev

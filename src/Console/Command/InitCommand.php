@@ -191,8 +191,9 @@ final class ExampleTask implements TaskInterface
         $ctx->info("App: {$appName}");
         $ctx->info("Context: {$context}");
 
-        // Example shell command (uncomment to try)
-        // $result = $ctx->shell('echo "Hello from shell"');
+        // Run a program without a shell (uncomment to try). Arguments are
+        // passed through as they are, so nothing needs escaping.
+        // $result = $ctx->exec(['echo', 'Hello from {{ app_name }}']);
         // $ctx->info($result->output);
 
         return TaskResult::success("Greeted {$name}");

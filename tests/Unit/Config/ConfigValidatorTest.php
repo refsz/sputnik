@@ -294,7 +294,8 @@ final class ConfigValidatorTest extends TestCase
         $this->validator->validate([
             'environment' => [
                 'detection' => 'auto',
-                'executor' => 'docker exec app {command}',
+                'executor' => ['docker', 'exec', 'app'],
+                'shell' => ['bash', '-lc'],
             ],
         ]);
         $this->assertTrue(true);
@@ -442,13 +443,23 @@ final class ConfigValidatorTest extends TestCase
         ]);
     }
 
-    public function testEnvironmentExecutorMustContainCommandPlaceholder(): void
+    public function testEnvironmentExecutorMustNotBeAnEmptyList(): void
     {
         $this->expectException(ConfigValidationException::class);
-        $this->expectExceptionMessage('{command}');
+        $this->expectExceptionMessage('executor');
 
         $this->validator->validate([
-            'environment' => ['executor' => 'docker exec app'],
+            'environment' => ['executor' => []],
+        ]);
+    }
+
+    public function testEnvironmentExecutorRejectsTheOldStringForm(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage('executor');
+
+        $this->validator->validate([
+            'environment' => ['executor' => 'docker exec app {command}'],
         ]);
     }
 

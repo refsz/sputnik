@@ -75,7 +75,7 @@ final class DeployTask implements TaskInterface
     public function __invoke(TaskContext $ctx): TaskResult
     {
         $ctx->shell('rsync -avz ./dist/ {{ deployPath }}/');
-        $ctx->shellRaw('php artisan migrate --force');
+        $ctx->exec(['php', 'artisan', 'migrate', '--force']);
 
         return TaskResult::success();
     }

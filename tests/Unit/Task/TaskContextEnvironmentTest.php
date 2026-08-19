@@ -18,63 +18,63 @@ use Sputnik\Variable\VariableResolverInterface;
 
 final class TaskContextEnvironmentTest extends TestCase
 {
-    public function testShellRawWrapsForContainerOnHost(): void
+    public function testExecWrapsForContainerOnHost(): void
     {
         $captured = null;
         $inner = $this->createMockExecutor($captured);
-        $detector = new EnvironmentDetector(detection: 'false', executor: 'docker compose exec -T app {command}');
+        $detector = new EnvironmentDetector(detection: 'false', executor: ['docker', 'compose', 'exec', '-T', 'app']);
         $executor = new EnvironmentAwareExecutor($inner, $detector, 'container');
 
         $ctx = $this->createContext($executor);
-        $ctx->shellRaw('composer install');
+        $ctx->exec(['composer', 'install']);
 
-        $this->assertSame('docker compose exec -T app composer install', $captured);
+        $this->assertSame(['docker', 'compose', 'exec', '-T', 'app', 'composer', 'install'], $captured);
     }
 
-    public function testShellRawDoesNotWrapInContainer(): void
+    public function testExecDoesNotWrapInContainer(): void
     {
         $captured = null;
         $inner = $this->createMockExecutor($captured);
-        $detector = new EnvironmentDetector(detection: 'true', executor: 'docker compose exec -T app {command}');
+        $detector = new EnvironmentDetector(detection: 'true', executor: ['docker', 'compose', 'exec', '-T', 'app']);
         $executor = new EnvironmentAwareExecutor($inner, $detector, 'container');
 
         $ctx = $this->createContext($executor);
-        $ctx->shellRaw('composer install');
+        $ctx->exec(['composer', 'install']);
 
-        $this->assertSame('composer install', $captured);
+        $this->assertSame(['composer', 'install'], $captured);
     }
 
-    public function testShellRawDoesNotWrapHostTasks(): void
+    public function testExecDoesNotWrapHostTasks(): void
     {
         $captured = null;
         $inner = $this->createMockExecutor($captured);
-        $detector = new EnvironmentDetector(detection: 'false', executor: 'docker compose exec -T app {command}');
+        $detector = new EnvironmentDetector(detection: 'false', executor: ['docker', 'compose', 'exec', '-T', 'app']);
         $executor = new EnvironmentAwareExecutor($inner, $detector, 'host');
 
         $ctx = $this->createContext($executor);
-        $ctx->shellRaw('docker compose up');
+        $ctx->exec(['docker', 'compose', 'up']);
 
-        $this->assertSame('docker compose up', $captured);
+        $this->assertSame(['docker', 'compose', 'up'], $captured);
     }
 
-    public function testShellRawDoesNotWrapNullEnvironment(): void
+    public function testExecDoesNotWrapNullEnvironment(): void
     {
         $captured = null;
         $inner = $this->createMockExecutor($captured);
-        $detector = new EnvironmentDetector(detection: 'false', executor: 'docker compose exec -T app {command}');
+        $detector = new EnvironmentDetector(detection: 'false', executor: ['docker', 'compose', 'exec', '-T', 'app']);
         $executor = new EnvironmentAwareExecutor($inner, $detector, null);
 
         $ctx = $this->createContext($executor);
-        $ctx->shellRaw('echo hello');
+        $ctx->exec(['echo', 'hello']);
 
-        $this->assertSame('echo hello', $captured);
+        $this->assertSame(['echo', 'hello'], $captured);
     }
 
     public function testShellWrapsWithInterpolation(): void
     {
         $captured = null;
         $inner = $this->createMockExecutor($captured);
-        $detector = new EnvironmentDetector(detection: 'false', executor: 'docker compose exec -T app {command}');
+        $detector = new EnvironmentDetector(detection: 'false', executor: ['docker', 'compose', 'exec', '-T', 'app']);
         $executor = new EnvironmentAwareExecutor($inner, $detector, 'container');
 
         $variables = $this->createMock(VariableResolverInterface::class);
@@ -83,7 +83,9 @@ final class TaskContextEnvironmentTest extends TestCase
         $ctx = $this->createContext($executor, $variables);
         $ctx->shell('echo {{ APP_ENV }}');
 
-        $this->assertStringStartsWith('docker compose exec -T app echo', $captured);
+        // A shell string becomes the final argument of a shell inside the executor.
+        $this->assertSame(['docker', 'compose', 'exec', '-T', 'app', 'sh', '-c'], \array_slice($captured, 0, 7));
+        $this->assertStringStartsWith('echo ', $captured[7]);
     }
 
     public function testWithoutDecoratorNoWrapping(): void
@@ -92,19 +94,20 @@ final class TaskContextEnvironmentTest extends TestCase
         $executor = $this->createMockExecutor($captured);
 
         $ctx = $this->createContext($executor);
-        $ctx->shellRaw('composer install');
+        $ctx->exec(['composer', 'install']);
 
-        $this->assertSame('composer install', $captured);
+        $this->assertSame(['composer', 'install'], $captured);
     }
 
-    private function createMockExecutor(?string &$captured): ExecutorInterface
+    private function createMockExecutor(array|string|null &$captured): ExecutorInterface
     {
         $executor = $this->createMock(ExecutorInterface::class);
         $executor->method('execute')
-            ->willReturnCallback(static function (string $command) use (&$captured) {
+            ->willReturnCallback(static function (array|string $command) use (&$captured) {
                 $captured = $command;
+                $display = \is_array($command) ? implode(' ', $command) : $command;
 
-                return new ExecutionResult(0, '', '', 0.1, $command);
+                return new ExecutionResult(0, '', '', 0.1, $display);
             });
 
         return $executor;

@@ -51,7 +51,7 @@ final class GreetTask implements TaskInterface
 {
     public function __invoke(TaskContext $ctx): TaskResult
     {
-        $ctx->shellRaw('echo "Hello from Sputnik!"');
+        $ctx->shell('echo "Hello from Sputnik!"');
 
         return TaskResult::success();
     }
