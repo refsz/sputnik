@@ -7,6 +7,5 @@
 /build/
 *.phar
 auth.json
-TODO.local.md
 /site/
 /.claude/
