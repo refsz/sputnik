@@ -506,6 +506,31 @@ final class ConfigValidatorTest extends TestCase
         ]);
     }
 
+    public function testUnknownKeyUnderContextVariablesIsRejected(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage('constatns');
+
+        $this->validator->validate([
+            'contexts' => [
+                'prod' => ['variables' => ['constatns' => ['appEnv' => 'prod']]],
+            ],
+        ]);
+    }
+
+    public function testContextKeysOutsideVariablesStayOpenForListeners(): void
+    {
+        // The context body is deliberately extensible: a listener may read its
+        // own key from the raw config. Only the variables namespace is closed.
+        $this->validator->validate([
+            'contexts' => [
+                'prod' => ['description' => 'Production', 'deployHost' => 'example.com'],
+            ],
+        ]);
+
+        $this->assertTrue(true);
+    }
+
     public function testMultipleErrorsAreCollected(): void
     {
         $config = [
