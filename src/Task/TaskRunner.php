@@ -83,6 +83,12 @@ final class TaskRunner implements TaskRunnerInterface
             $this->eventDispatcher->dispatch($beforeEvent);
 
             if ($beforeEvent->isCancelled()) {
+                // renderTemplates() above already ran and may have queued
+                // diagnostics for a secret that failed to resolve during
+                // rendering - drain them here too, not just on the success
+                // and failure paths below.
+                $this->reportSecretDiagnostics($logger);
+
                 return TaskResult::skipped($beforeEvent->getCancelReason() ?? 'Cancelled by listener');
             }
 

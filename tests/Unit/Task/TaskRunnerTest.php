@@ -6,6 +6,7 @@ namespace Sputnik\Tests\Unit\Task;
 
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Sputnik\Attribute\Option;
 use Sputnik\Attribute\Task;
@@ -16,6 +17,7 @@ use Sputnik\Event\BeforeTaskEvent;
 use Sputnik\Event\TaskFailedEvent;
 use Sputnik\Event\TemplateRenderedEvent;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
+use Sputnik\Secret\SecretRegistry;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskInterface;
 use Sputnik\Task\TaskMetadata;
@@ -134,6 +136,59 @@ final class TaskRunnerTest extends TestCase
 
         $this->assertTrue($result->isSkipped());
         $this->assertStringContainsString('blocked by test', $result->message);
+    }
+
+    public function testCancelledTaskStillDrainsSecretDiagnosticsFromTemplateRendering(): void
+    {
+        $metadata = new TaskMetadata('FakeTask', new Task(name: 'test:task'));
+        $this->discovery->method('getTask')->willReturn($metadata);
+        $this->container->method('has')->willReturn(false);
+
+        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher->method('dispatch')
+            ->willReturnCallback(static function ($event) {
+                if ($event instanceof BeforeTaskEvent) {
+                    $event->cancel('blocked by test');
+                }
+
+                return $event;
+            });
+
+        $registry = new SecretRegistry();
+        $registry->declareSecrets(['apiToken']);
+
+        $this->templateEngine = $this->createMock(TemplateEngine::class);
+        $this->templateEngine->method('getTemplatesForContext')
+            ->willReturn(['env' => new TemplateConfig('env', 'src', 'dist')]);
+        $this->templateEngine->method('renderAll')
+            ->willReturnCallback(static function () use ($registry): array {
+                // Simulates a template rendering that resolves a secret which
+                // fails - resolution happens inside renderAll() in real use.
+                $registry->remember('apiToken', null);
+
+                return [];
+            });
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())
+            ->method('warning')
+            ->with("secret 'apiToken' could not be resolved");
+
+        $runner = new TaskRunner(
+            discovery: $this->discovery,
+            variableResolver: $this->variables,
+            container: $this->container,
+            logger: $logger,
+            templateEngine: $this->templateEngine,
+            eventDispatcher: $this->eventDispatcher,
+            workingDir: sys_get_temp_dir(),
+            contextName: 'test',
+            secrets: $registry,
+        );
+
+        $result = $runner->run('test:task');
+
+        $this->assertTrue($result->isSkipped());
     }
 
     public function testExceptionReturnsFailureResult(): void
