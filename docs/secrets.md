@@ -52,7 +52,12 @@ value that arrives by a route Sputnik never saw.
 
 `command`, `script` and `env`. A plain scalar works as a literal value, but a
 secret does not belong in a committed config file. `git` and `system` are
-rejected here.
+rejected here, at config load rather than at first access.
+
+A misspelled section name is rejected too, which matters more than it sounds: an
+unknown key under `variables` used to be accepted, so `secrests:` left every
+secret it declared resolving to `null` - nothing was masked because no value
+existed, and the task ran on with an empty argument and exited 0.
 
 !!! note "`env` is a secret-only type"
     `variables.dynamics` does not accept `type: env` -- it allows `command`,

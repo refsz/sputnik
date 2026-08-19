@@ -50,7 +50,8 @@ final class KernelTest extends TestCase
     {
         $configContent = <<<'NEON'
 variables:
-    app_name: MyApp
+    constants:
+        app_name: MyApp
 
 contexts:
     local:
@@ -65,7 +66,7 @@ NEON;
 
         $kernel = new Kernel(workingDir: $this->tempDir);
 
-        $this->assertSame('MyApp', $kernel->getConfig()->get('variables.app_name'));
+        $this->assertSame('MyApp', $kernel->getConfig()->get('variables.constants.app_name'));
     }
 
     public function testKernelProvidesContainer(): void
@@ -308,7 +309,8 @@ NEON;
     {
         $configContent = <<<'NEON'
 variables:
-    dispatched_key: dispatched_value
+    constants:
+        dispatched_key: dispatched_value
 NEON;
         file_put_contents($this->tempDir . '/.sputnik.dist.neon', $configContent);
 
@@ -330,6 +332,6 @@ NEON;
         $kernel->getEventDispatcher()->dispatch(new ConfigLoadedEvent($kernel->getConfig()));
 
         $this->assertInstanceOf(Configuration::class, $captured);
-        $this->assertSame('dispatched_value', $captured->get('variables.dispatched_key'));
+        $this->assertSame('dispatched_value', $captured->get('variables.constants.dispatched_key'));
     }
 }

@@ -463,6 +463,49 @@ final class ConfigValidatorTest extends TestCase
         ]);
     }
 
+    public function testSecretsAreAccepted(): void
+    {
+        $this->validator->validate([
+            'variables' => [
+                'secrets' => [
+                    'apiToken' => ['type' => 'command', 'command' => 'pass show project/api'],
+                    'dbPassword' => ['type' => 'env', 'name' => 'DB_PASSWORD'],
+                    'literal' => 'a-literal-value',
+                ],
+            ],
+        ]);
+
+        $this->assertTrue(true);
+    }
+
+    public function testUnknownKeyUnderVariablesIsRejected(): void
+    {
+        // A misspelled section used to pass silently, leaving every secret it
+        // declared unresolved - the masked value simply never existed.
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage('secrests');
+
+        $this->validator->validate([
+            'variables' => [
+                'secrests' => ['apiToken' => 'super-secret'],
+            ],
+        ]);
+    }
+
+    public function testSecretWithAnUnsupportedTypeIsRejectedAtLoad(): void
+    {
+        $this->expectException(ConfigValidationException::class);
+        $this->expectExceptionMessage('type');
+
+        $this->validator->validate([
+            'variables' => [
+                'secrets' => [
+                    'apiToken' => ['type' => 'git', 'command' => 'rev-parse'],
+                ],
+            ],
+        ]);
+    }
+
     public function testMultipleErrorsAreCollected(): void
     {
         $config = [

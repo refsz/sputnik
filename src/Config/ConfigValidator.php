@@ -55,7 +55,21 @@ final class ConfigValidator
                         'type' => Expect::anyOf('command', 'git', 'script', 'system', 'composite')->nullable(),
                     ])->otherItems()->castTo('array'),
                 ),
-            ])->otherItems()->castTo('array'),
+                // A secret is either a literal scalar or a provider. Declaring
+                // it here is what makes a misspelled section name an error: an
+                // unknown key would otherwise be accepted and every secret it
+                // held would resolve to null, silently unmasked because the
+                // value never existed.
+                'secrets' => Expect::arrayOf(
+                    Expect::anyOf(
+                        Expect::structure([
+                            'type' => Expect::anyOf('command', 'script', 'env')->nullable(),
+                        ])->otherItems()->castTo('array'),
+                        Expect::scalar(),
+                    ),
+                    'string',
+                ),
+            ])->castTo('array'),
             'templates' => Expect::arrayOf(
                 Expect::structure([
                     'src' => Expect::string()->required(),

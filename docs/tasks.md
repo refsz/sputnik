@@ -203,7 +203,7 @@ $ctx->exec(['make', 'build'], [
 
 - `env` -- additional environment variables for the process
 - `tty` -- allocate a TTY (disables timeout automatically)
-- `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; `tty: true` removes the limit.
+- `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; pass `0` or `tty: true` to remove the limit
 
 Returns `ExecutionResult` with:
 
@@ -216,8 +216,8 @@ Returns `ExecutionResult` with:
 | `command` | The command as it was displayed. An argv list is joined with spaces for readability and makes no quoting promise |
 | `isSuccessful()` | True if exit code is 0 |
 | `assertSuccess()` | Throws if exit code is not 0 |
-| `getOutput()` | Stdout, trimmed |
-| `getErrorOutput()` | Stderr, trimmed |
+| `getOutput()` | Stdout, same value as the property |
+| `getErrorOutput()` | Stderr, same value as the property |
 | `getCombinedOutput()` | Stdout and stderr together |
 
 ### Sub-tasks
