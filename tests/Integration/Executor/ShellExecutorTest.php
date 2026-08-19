@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sputnik\Tests\Integration\Executor;
 
 use PHPUnit\Framework\TestCase;
+use Sputnik\Console\OutputChannel;
 use Sputnik\Console\SputnikOutput;
 use Sputnik\Executor\ExecutionException;
 use Sputnik\Executor\ShellExecutor;
@@ -42,7 +43,9 @@ final class ShellExecutorTest extends TestCase
     public function testExecuteQuietSuppressesStreaming(): void
     {
         $output = new BufferedOutput();
-        $executor = new ShellExecutor($output);
+        $channel = new OutputChannel();
+        $channel->set($output);
+        $executor = new ShellExecutor($channel);
 
         $result = $executor->executeQuiet('echo "quiet test"');
 
@@ -54,7 +57,9 @@ final class ShellExecutorTest extends TestCase
     public function testExecuteStreamsToOutput(): void
     {
         $output = new BufferedOutput();
-        $executor = new ShellExecutor($output);
+        $channel = new OutputChannel();
+        $channel->set($output);
+        $executor = new ShellExecutor($channel);
 
         $result = $executor->execute('echo "streamed"');
 
@@ -111,7 +116,9 @@ final class ShellExecutorTest extends TestCase
         $buffer = new BufferedOutput();
         $sputnikOutput = new SputnikOutput($buffer, '0.1.0', '.sputnik.dist.neon', 'dev');
 
-        $executor = new ShellExecutor(sputnikOutput: $sputnikOutput);
+        $channel = new OutputChannel();
+        $channel->set($sputnikOutput->getOutput(), $sputnikOutput);
+        $executor = new ShellExecutor($channel);
         $executor->execute('echo "test output"');
 
         $display = $buffer->fetch();
@@ -124,7 +131,9 @@ final class ShellExecutorTest extends TestCase
         $sputnikOutput = new SputnikOutput($buffer, '0.1.0', '.sputnik.dist.neon', 'dev');
         $sputnikOutput->setTotalSteps(2);
 
-        $executor = new ShellExecutor(sputnikOutput: $sputnikOutput);
+        $channel = new OutputChannel();
+        $channel->set($sputnikOutput->getOutput(), $sputnikOutput);
+        $executor = new ShellExecutor($channel);
         $executor->execute('echo "done"');
 
         $display = $buffer->fetch();
@@ -137,7 +146,9 @@ final class ShellExecutorTest extends TestCase
         $sputnikOutput = new SputnikOutput($buffer, '0.1.0', '.sputnik.dist.neon', 'dev');
         $sputnikOutput->setTotalSteps(1);
 
-        $executor = new ShellExecutor(sputnikOutput: $sputnikOutput);
+        $channel = new OutputChannel();
+        $channel->set($sputnikOutput->getOutput(), $sputnikOutput);
+        $executor = new ShellExecutor($channel);
         $executor->execute('echo "done"');
 
         $display = $buffer->fetch();
