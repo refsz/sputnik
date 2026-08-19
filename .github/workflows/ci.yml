@@ -81,6 +81,15 @@ jobs:
       - name: Smoke test PHAR
         run: .github/scripts/smoke-phar.sh build/sputnik.phar
 
+      # tests/E2E runs against the built archive and skips itself when there is
+      # none, so it has never run in CI. The dev dependencies are restored after
+      # the build because the PHAR must not contain them.
+      - name: Restore dev dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run E2E tests against the PHAR
+        run: vendor/bin/phpunit --testsuite e2e --no-coverage
+
   phpstan:
     name: PHPStan
     runs-on: ubuntu-latest
