@@ -88,10 +88,22 @@ hostname:
 | `user` | Current user |
 | `os` | Operating system name |
 | `phpVersion` | PHP version string |
-| `cwd` | Current working directory |
+| `cwd` | The project root Sputnik is working in -- the same directory `--working-dir` sets, **not** the shell's current directory |
 | `timestamp` | Unix timestamp |
 | `date` | Current date (YYYY-MM-DD) |
 | `datetime` | Current date and time |
+
+### type: env
+
+```neon
+home:
+    type: env
+    name: HOME
+```
+
+Reads an environment variable, or `null` if it is not set. For a value that must
+not be printed, declare it under [secrets](secrets.md) instead -- the same type
+works there and adds masking.
 
 ### type: composite
 

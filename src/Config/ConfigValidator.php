@@ -66,7 +66,7 @@ final class ConfigValidator
                 'constants' => Expect::array(),
                 'dynamics' => Expect::arrayOf(
                     Expect::structure([
-                        'type' => Expect::anyOf('command', 'git', 'script', 'system', 'composite')->nullable(),
+                        'type' => Expect::anyOf('command', 'git', 'script', 'system', 'composite', 'env')->nullable(),
                     ])->otherItems()->castTo('array'),
                 ),
                 // A secret is either a literal scalar or a provider. Declaring

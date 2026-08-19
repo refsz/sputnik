@@ -62,10 +62,11 @@ inside a context: only `constants` may be overridden there, and a `secrets` or
 `dynamics` block under `contexts.*.variables` is an error rather than a section
 that quietly does nothing.
 
-!!! note "`env` is a secret-only type"
-    `variables.dynamics` does not accept `type: env` -- it allows `command`,
-    `git`, `script`, `system` and `composite`. Reading a plain, non-sensitive
-    environment variable is a `command` dynamic (`command: "printenv HOME"`).
+!!! note "The same types work under `dynamics`"
+    `type: env` is not secret-only. Use it under
+    [`variables.dynamics`](variables.md#type-env) for a value that may be
+    printed, and here for one that may not -- the declaration is identical, the
+    masking is what differs.
 
 Secrets resolve lazily, on first access of that name, so a `pass` or `op` lookup
 does not prompt for tasks that never use the secret.
