@@ -20,6 +20,16 @@ final class Application extends BaseApplication
 
     private ?TaskDiscovery $taskDiscovery = null;
 
+    /**
+     * @var list<string>
+     */
+    private array $discoveryWarnings = [];
+
+    /**
+     * @var list<string>
+     */
+    private array $discoveryNotices = [];
+
     public function __construct()
     {
         parent::__construct(self::NAME, self::VERSION);
@@ -40,6 +50,16 @@ final class Application extends BaseApplication
         $this->taskDiscovery = $discovery;
     }
 
+    /**
+     * @param list<string> $warnings Shown on every run: something is broken
+     * @param list<string> $notices  Shown with -v: something took effect as asked
+     */
+    public function setDiscoveryMessages(array $warnings, array $notices): void
+    {
+        $this->discoveryWarnings = $warnings;
+        $this->discoveryNotices = $notices;
+    }
+
     public function getHelp(): string
     {
         return '';
@@ -49,6 +69,18 @@ final class Application extends BaseApplication
     {
         $commandName = $this->getCommandName($input);
         $isList = $commandName === null || $commandName === 'list';
+
+        // Reported here, not while the application is assembled: -v is parsed by
+        // run(), so verbosity is not known any earlier.
+        foreach ($this->discoveryWarnings as $warning) {
+            $output->writeln('<comment>' . $warning . '</comment>');
+        }
+
+        if ($output->isVerbose()) {
+            foreach ($this->discoveryNotices as $notice) {
+                $output->writeln('<comment>' . $notice . '</comment>');
+            }
+        }
 
         // Show our header instead of Symfony's "AppName version" for list
         if ($isList) {

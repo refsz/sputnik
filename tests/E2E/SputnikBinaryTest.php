@@ -425,8 +425,15 @@ final class SputnikBinaryTest extends TestCase
 
         $this->assertSame(0, $result->getExitCode());
         $this->assertStringContainsString('project init ran', $output);
-        $this->assertStringContainsString('shadows', $output);
         $this->assertStringNotContainsString('Initializing Sputnik project', $output);
+
+        // The override works as asked, so it does not announce itself on every
+        // command - a project with tasks has been initialised anyway.
+        $this->assertStringNotContainsString('shadows', $output);
+
+        $verbose = $this->sputnik(['init', '-v'], $this->tempDir);
+
+        $this->assertStringContainsString('shadows', $verbose->getOutput() . $verbose->getErrorOutput());
     }
 
     public function testAReservedNameSkipsOnlyThatTaskAndKeepsTheCliUsable(): void

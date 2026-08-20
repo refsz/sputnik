@@ -143,18 +143,22 @@ Skipped task 'list' in /project/sputnik/ListTask.php: the name is reserved by a
 built-in command - rename the task or give it a group prefix
 ```
 
+The warning appears on every run, not only the one that filled the container
+cache -- the task stays missing until someone renames it.
+
 `init` is different: a project task may take it, and then the built-in scaffold
 is no longer reachable. Scaffolding a project happens once, while a project
-command called `init` may well be a daily one, so the project wins -- and says
-so:
+command called `init` may well be a daily one, so the project wins.
+
+That override is **not** announced on every command. Nothing is broken -- it
+works as asked, and a project that has tasks has been initialised anyway. It
+shows with `-v`, where you would look for it:
 
 ```
+$ sputnik deploy -v
 Task 'init' in /project/sputnik/InitTask.php shadows the built-in init command,
 which is no longer reachable
 ```
-
-Both warnings appear on every run, not only the one that filled the container
-cache.
 
 ### Option Names
 

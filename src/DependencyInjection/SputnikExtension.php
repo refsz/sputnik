@@ -115,6 +115,7 @@ final class SputnikExtension extends CompilerExtension
                 $taskDiscovery->discoverAll(),
                 $taskDiscovery->getAliasMap(),
                 $taskDiscovery->getWarnings(),
+                $taskDiscovery->getNotices(),
             ])
             ->setAutowired(true);
 
