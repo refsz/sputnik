@@ -33,43 +33,58 @@ if (\Phar::running() !== '') {
 use Sputnik\Kernel;
 use Symfony\Component\Console\Output\ConsoleOutput;
 
-// Determine working directory
-$workingDir = getcwd();
+// Determine working directory. Null until --working-dir says otherwise, because
+// the default is the project directory, which is not known yet.
+$workingDirOption = null;
 
 // Check for --working-dir option
 $args = $_SERVER['argv'];
 foreach ($args as $i => $arg) {
     if (str_starts_with($arg, '--working-dir=')) {
-        $workingDir = substr($arg, 14);
+        $workingDirOption = substr($arg, 14);
         unset($args[$i]);
         $_SERVER['argv'] = array_values($args);
         break;
     }
     if ($arg === '--working-dir' && isset($args[$i + 1])) {
-        $workingDir = $args[$i + 1];
+        $workingDirOption = $args[$i + 1];
         unset($args[$i], $args[$i + 1]);
         $_SERVER['argv'] = array_values($args);
         break;
     }
 }
 
-// Make the project root the working directory of the process, so a task doing
-// its own file I/O sees the same place its commands run in. Until now exec() ran
-// in the project root while file_exists() in the task resolved against the
-// caller's cwd, which is why a wrapper had to cd before calling the binary.
+// Two directories, one question each.
 //
-// Resolving to an absolute path first is not cosmetic: a relative
-// --working-dir would otherwise be looked up inside itself after the chdir.
-// It also keeps the container cache key stable, which includes this path.
-if ($workingDir === false || !is_dir($workingDir)) {
-    fwrite(\STDERR, \sprintf(
-        "Working directory does not exist: %s\n",
-        $workingDir === false ? '(could not be determined)' : $workingDir,
-    ));
+// The project directory is where the config lives, and with it the container
+// cache and the persisted context. It is searched for upwards, the way git and
+// composer find their root, so a call from a subdirectory works and nothing is
+// written beside the caller. No config anywhere above means no project - then
+// only the built-in init has anything to do.
+//
+// The working directory is where tasks run: the cwd of exec() and shell(), and
+// what relative file access in a task resolves against. It defaults to the
+// project directory and only --working-dir moves it.
+//
+// Resolving to an absolute path before the chdir is not cosmetic: a relative
+// --working-dir would otherwise be looked up inside itself, and the container
+// cache key contains this path.
+$cwd = getcwd();
+
+if ($cwd === false) {
+    fwrite(\STDERR, "Could not determine the current directory\n");
 
     exit(1);
 }
 
+if ($workingDirOption !== null && !is_dir($workingDirOption)) {
+    fwrite(\STDERR, 'Working directory does not exist: ' . $workingDirOption . "\n");
+
+    exit(1);
+}
+
+$projectDir = Sputnik\Support\ProjectLocator::locate($workingDirOption ?? $cwd);
+$workingDir = $workingDirOption ?? $projectDir ?? $cwd;
 $resolvedWorkingDir = realpath($workingDir);
 
 if ($resolvedWorkingDir === false || !@chdir($resolvedWorkingDir)) {
@@ -103,7 +118,7 @@ $output = new ConsoleOutput();
 
 // Bootstrap and run
 try {
-    $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride);
+    $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride, projectDir: $projectDir);
     $output = new Sputnik\Secret\RedactingConsoleOutput($output, $kernel->getSecretRedactor());
 
     // Everything that writes shares this destination: tasks, the commands, and

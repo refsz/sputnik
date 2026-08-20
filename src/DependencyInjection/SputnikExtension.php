@@ -41,6 +41,13 @@ final class SputnikExtension extends CompilerExtension
 
     public function __construct(
         private readonly Configuration $sputnikConfig,
+        /**
+         * Where config-declared paths resolve: task directories, templates.
+         */
+        private readonly string $projectDir,
+        /**
+         * Where tasks run.
+         */
         private readonly string $workingDir,
     ) {
     }
@@ -82,7 +89,9 @@ final class SputnikExtension extends CompilerExtension
         $builder->addDefinition($this->prefix('contextManager'))
             ->setFactory(ContextManager::class, [
                 'config' => $this->prefix('@config'),
-                'workingDir' => $params['workingDir'],
+                // The persisted context belongs to the project, not to wherever
+                // the binary was invoked.
+                'projectDir' => $params['projectDir'],
             ])
             ->setAutowired(true);
 
@@ -213,7 +222,7 @@ final class SputnikExtension extends CompilerExtension
     private function getTaskDiscovery(): TaskDiscovery
     {
         if (!$this->taskDiscovery instanceof TaskDiscovery) {
-            $taskDirs = $this->sputnikConfig->getTaskDirectories($this->workingDir);
+            $taskDirs = $this->sputnikConfig->getTaskDirectories($this->projectDir);
             $taskClasses = $this->sputnikConfig->getTaskClasses();
             $this->taskDiscovery = new TaskDiscovery($taskDirs, $taskClasses);
         }

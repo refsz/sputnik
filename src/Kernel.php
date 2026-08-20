@@ -22,6 +22,7 @@ use Sputnik\Event\ConfigLoadedEvent;
 use Sputnik\Exception\RuntimeException as SputnikRuntimeException;
 use Sputnik\Secret\SecretRedactor;
 use Sputnik\Secret\SecretRegistry;
+use Sputnik\Support\ProjectLocator;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskRunner;
 use Sputnik\Template\TemplateEngine;
@@ -36,17 +37,32 @@ final class Kernel
 
     private string $workingDir;
 
+    private ?string $projectDir;
+
     private string $contextName;
 
     private bool $debugMode;
 
+    /**
+     * @param string|null $workingDir Where tasks run. Defaults to the project
+     *                                directory, or to the current directory when
+     *                                there is no project.
+     * @param string|null $projectDir The project directory. Located by searching
+     *                                upwards from $workingDir when not given;
+     *                                null means there is no project, and nothing
+     *                                may be persisted next to the caller.
+     */
     public function __construct(
         ?string $workingDir = null,
         ?string $contextName = null,
         bool $debugMode = false,
+        ?string $projectDir = null,
     ) {
         $cwdResult = getcwd();
-        $this->workingDir = $workingDir ?? ($cwdResult !== false ? $cwdResult : throw new SputnikRuntimeException('Could not determine working directory'));
+        $cwd = $cwdResult !== false ? $cwdResult : throw new SputnikRuntimeException('Could not determine working directory');
+
+        $this->projectDir = $projectDir ?? ProjectLocator::locate($workingDir ?? $cwd);
+        $this->workingDir = $workingDir ?? $this->projectDir ?? $cwd;
         $this->debugMode = $debugMode;
 
         $this->loadConfig();
@@ -156,8 +172,12 @@ final class Kernel
         $base = '.sputnik.dist.neon';
         $local = '.sputnik.neon';
 
-        $hasBase = file_exists($this->workingDir . '/' . $base);
-        $hasLocal = file_exists($this->workingDir . '/' . $local);
+        if ($this->projectDir === null) {
+            return 'no config';
+        }
+
+        $hasBase = file_exists($this->projectDir . '/' . $base);
+        $hasLocal = file_exists($this->projectDir . '/' . $local);
 
         if (!$hasBase && !$hasLocal) {
             return 'no config';
@@ -174,7 +194,7 @@ final class Kernel
 
     private function registerTaskAutoloader(): void
     {
-        $directories = $this->config->getTaskDirectories($this->workingDir);
+        $directories = $this->config->getTaskDirectories($this->projectDir ?? $this->workingDir);
 
         if ($directories === []) {
             return;
@@ -187,7 +207,7 @@ final class Kernel
 
     private function loadConfig(): void
     {
-        $loader = new ConfigLoader($this->workingDir);
+        $loader = new ConfigLoader($this->projectDir ?? $this->workingDir);
 
         if (!$loader->hasConfig()) {
             $this->config = new Configuration([]);
@@ -207,7 +227,7 @@ final class Kernel
         }
 
         // Create temporary context manager to read persisted context
-        $tempContextManager = new ContextManager($this->config, $this->workingDir);
+        $tempContextManager = new ContextManager($this->config, $this->projectDir);
         $this->contextName = $tempContextManager->getCurrentContext();
     }
 
@@ -215,6 +235,7 @@ final class Kernel
     {
         $factory = new ContainerFactory(
             config: $this->config,
+            projectDir: $this->projectDir,
             workingDir: $this->workingDir,
             contextName: $this->contextName,
             debugMode: $this->debugMode,

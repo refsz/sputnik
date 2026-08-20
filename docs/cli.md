@@ -24,10 +24,18 @@ sputnik --working-dir /var/www/myproject deploy
 sputnik --working-dir=/var/www/myproject deploy
 ```
 
-Sputnik enters that directory, so it is the working directory of the process:
-config files, task directories and templates resolve against it, commands run in
-it, and a task's own file access -- `file_exists('.ddev/config.yaml')`,
-`file_get_contents('dev-ops/config.yaml')` -- sees the same place.
+Change where tasks run -- the cwd of `exec()` and `shell()`, and what relative
+file access in a task resolves against. Sputnik enters that directory, so
+`file_exists('.env')` in a task and the commands it runs see the same place.
+
+It does **not** move the project. The config, the persisted context and the
+container cache stay in the [project directory](project-structure.md#the-project-directory),
+which is found by searching upwards. Without this option, tasks run in the
+project directory.
+
+```bash
+sputnik --working-dir=frontend npm:ci    # runs in frontend/, state stays at the root
+```
 
 A relative path is resolved against the directory you called from. If the
 directory does not exist, Sputnik says so and stops.

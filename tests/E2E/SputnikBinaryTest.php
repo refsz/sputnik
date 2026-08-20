@@ -942,6 +942,89 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('deploy', $output);
     }
 
+    public function testADirectoryWithoutAProjectStaysEmpty(): void
+    {
+        // .sputnik used to appear wherever the binary ran, because both the
+        // container cache and the persisted context hung off the working
+        // directory rather than off the project.
+        $empty = $this->tempDir . '/empty';
+        mkdir($empty, 0755, true);
+
+        foreach ([['--version'], ['--help'], ['list']] as $args) {
+            $this->sputnik($args, $empty);
+        }
+
+        $this->assertSame(['.', '..'], scandir($empty), 'Nothing may be written next to a caller without a project');
+    }
+
+    public function testTheProjectIsFoundFromASubdirectory(): void
+    {
+        $this->scaffoldProject([
+            'where' => <<<'PHP'
+                #[Task(name: 'where', description: 'Reports its directories')]
+                final class WhereTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('cwd=' . getcwd());
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $deep = $this->tempDir . '/htdocs/web';
+        mkdir($deep, 0755, true);
+
+        $result = $this->sputnik(['where'], $deep);
+
+        $this->assertSame(0, $result->getExitCode(), 'Called from a subdirectory it used to report "no config"');
+        $this->assertStringContainsString('cwd=' . $this->tempDir, $result->getOutput());
+        $this->assertSame(['.', '..'], scandir($deep), 'No state beside the caller');
+        $this->assertDirectoryExists($this->tempDir . '/.sputnik', 'State belongs to the project root');
+    }
+
+    public function testWorkingDirMovesExecutionButNotTheProject(): void
+    {
+        $this->scaffoldProject([
+            'where' => <<<'PHP'
+                #[Task(name: 'where', description: 'Reports its directories')]
+                final class WhereTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('cwd=' . getcwd());
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $sub = $this->tempDir . '/frontend';
+        mkdir($sub, 0755, true);
+
+        $result = $this->sputnik(['--working-dir=' . $sub, 'where'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('cwd=' . $sub, $result->getOutput(), 'Tasks run where asked');
+        $this->assertSame(['.', '..'], scandir($sub), 'But the project keeps its state');
+        $this->assertDirectoryExists($this->tempDir . '/.sputnik');
+    }
+
+    public function testInitStillScaffoldsWhereThereIsNoProject(): void
+    {
+        $empty = $this->tempDir . '/fresh';
+        mkdir($empty, 0755, true);
+
+        $result = $this->sputnik(['init'], $empty);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertFileExists($empty . '/.sputnik.dist.neon');
+        $this->assertFileExists($empty . '/sputnik/ExampleTask.php');
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(
