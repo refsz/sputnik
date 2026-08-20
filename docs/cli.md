@@ -24,7 +24,13 @@ sputnik --working-dir /var/www/myproject deploy
 sputnik --working-dir=/var/www/myproject deploy
 ```
 
-All paths (config files, task directories, templates) are resolved relative to this directory.
+Sputnik enters that directory, so it is the working directory of the process:
+config files, task directories and templates resolve against it, commands run in
+it, and a task's own file access -- `file_exists('.ddev/config.yaml')`,
+`file_get_contents('dev-ops/config.yaml')` -- sees the same place.
+
+A relative path is resolved against the directory you called from. If the
+directory does not exist, Sputnik says so and stops.
 
 ### `-D` / `--define`
 

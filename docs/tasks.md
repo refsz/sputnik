@@ -260,6 +260,11 @@ $ctx->getContextName(); // current context name
 $ctx->getWorkingDir();  // project root path
 ```
 
+The project root is also the process working directory, so relative paths in a
+task -- `file_exists('.env')`, `scandir('.ddev')` -- resolve against it, the same
+place `exec()` and `shell()` run in. Use `getWorkingDir()` when you need the
+absolute path, for instance to pass one to a program.
+
 ## TaskResult
 
 Return one of three states from `__invoke()`:
