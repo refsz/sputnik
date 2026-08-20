@@ -801,9 +801,72 @@ final class SputnikBinaryTest extends TestCase
 
     // ── Helpers ─────────────────────────────────────────────────
 
-    /**
-     * @param array<string> $args
-     */
+    public function testWorkingDirIsAlsoTheDirectoryTaskCodeSeesFor(): void
+    {
+        // exec() has always run in the project root while PHP file I/O in the
+        // task resolved against the caller's cwd, so a task doing is_dir() or
+        // file_get_contents() on a relative path needed a wrapper that cd'd
+        // first. Both sides agree now.
+        $this->scaffoldProject([
+            'io' => <<<'PHP'
+                #[Task(name: 'io', description: 'relative file access')]
+                final class IoTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('php=' . var_export(file_exists('.sputnik.dist.neon'), true));
+                        $ctx->writeln('cwd=' . (getcwd() === $ctx->getWorkingDir() ? 'same' : 'differs'));
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        // Run from somewhere else entirely, addressing the project by option.
+        $result = $this->sputnik(['--working-dir=' . $this->tempDir, 'io'], sys_get_temp_dir());
+        $output = $result->getOutput() . $result->getErrorOutput();
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('php=true', $output);
+        $this->assertStringContainsString('cwd=same', $output);
+    }
+
+    public function testARelativeWorkingDirStillResolves(): void
+    {
+        $this->scaffoldProject([
+            'io' => <<<'PHP'
+                #[Task(name: 'io', description: 'relative file access')]
+                final class IoTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('php=' . var_export(file_exists('.sputnik.dist.neon'), true));
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        // Relative to the caller: resolving it has to happen before the chdir,
+        // or the config path would be looked up inside itself.
+        $result = $this->sputnik(['--working-dir=' . basename($this->tempDir), 'io'], \dirname($this->tempDir));
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('php=true', $result->getOutput());
+    }
+
+    public function testAMissingWorkingDirSaysSoInsteadOfFailingOnItsCache(): void
+    {
+        $result = $this->sputnik(['--working-dir=/does/not/exist', 'list']);
+        $output = $result->getOutput() . $result->getErrorOutput();
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $this->assertStringContainsString('/does/not/exist', $output);
+        $this->assertStringNotContainsString('mkdir', $output, 'The cache is a symptom, not the problem');
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(

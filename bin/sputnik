@@ -53,6 +53,33 @@ foreach ($args as $i => $arg) {
     }
 }
 
+// Make the project root the working directory of the process, so a task doing
+// its own file I/O sees the same place its commands run in. Until now exec() ran
+// in the project root while file_exists() in the task resolved against the
+// caller's cwd, which is why a wrapper had to cd before calling the binary.
+//
+// Resolving to an absolute path first is not cosmetic: a relative
+// --working-dir would otherwise be looked up inside itself after the chdir.
+// It also keeps the container cache key stable, which includes this path.
+if ($workingDir === false || !is_dir($workingDir)) {
+    fwrite(\STDERR, \sprintf(
+        "Working directory does not exist: %s\n",
+        $workingDir === false ? '(could not be determined)' : $workingDir,
+    ));
+
+    exit(1);
+}
+
+$resolvedWorkingDir = realpath($workingDir);
+
+if ($resolvedWorkingDir === false || !@chdir($resolvedWorkingDir)) {
+    fwrite(\STDERR, 'Could not enter working directory: ' . $workingDir . "\n");
+
+    exit(1);
+}
+
+$workingDir = $resolvedWorkingDir;
+
 // Check for --context option
 $contextOverride = null;
 $args = $_SERVER['argv'];
