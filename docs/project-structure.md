@@ -31,11 +31,39 @@ Local overrides. Gitignored. Values are deep-merged on top of `.sputnik.dist.neo
 
 Either file can exist on its own. If both exist, they are merged. If neither exists, Sputnik starts with an empty configuration (only built-in commands available).
 
+## The Project Directory
+
+The project is the directory holding `.sputnik.dist.neon` (or `.sputnik.neon`).
+Sputnik searches for it **upwards** from where you are, the way `git` and
+`composer` find their root, so a command works from anywhere inside the project:
+
+```bash
+cd htdocs/web/sites/default
+sputnik deploy            # same project, same state, same place the commands run
+```
+
+Everything project-local lives there and only there: the config, the compiled
+container and the persisted context. Outside a project -- no config in any parent
+directory -- there is nothing to persist, and Sputnik writes nothing beside you:
+
+```bash
+cd /tmp/somewhere
+sputnik --version         # leaves the directory exactly as it was
+sputnik init              # this is what you came for
+```
+
+Tasks run in the project directory by default. `--working-dir` moves **that** and
+nothing else: the project keeps its state where it is.
+
+```bash
+sputnik --working-dir=frontend npm:ci    # runs in frontend/, state stays at the root
+```
+
 ## Runtime Directory
 
 ### `.sputnik/`
 
-Auto-created on first run. Contains:
+Created in the project directory on first run. Contains:
 
 - **`state.json`** -- stores the currently active context name. Updated by `context:switch`.
 - **`cache/`** -- compiled Nette DI container classes. Automatically invalidated when task files change, configuration changes, or the Sputnik version changes.

@@ -37,7 +37,7 @@ final class ContainerFactoryTest extends TestCase
     public function testCreateReturnsContainer(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
 
@@ -47,7 +47,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesConfiguration(): void
     {
         $config = new Configuration(['foo' => 'bar']);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $resolvedConfig = $container->getByType(Configuration::class);
@@ -59,7 +59,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesLogger(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $logger = $container->getByType(LoggerInterface::class);
@@ -70,7 +70,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesShellExecutor(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $executor = $container->getByType(ShellExecutor::class);
@@ -83,7 +83,7 @@ final class ContainerFactoryTest extends TestCase
         $config = new Configuration([
             'contexts' => ['local' => []],
         ]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'local');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'local');
 
         $container = $factory->create();
         $contextManager = $container->getByType(ContextManager::class);
@@ -96,7 +96,7 @@ final class ContainerFactoryTest extends TestCase
         $config = new Configuration([
             'variables' => ['name' => 'value'],
         ]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $resolver = $container->getByType(VariableResolver::class);
@@ -107,7 +107,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesTaskDiscovery(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $discovery = $container->getByType(TaskDiscovery::class);
@@ -118,7 +118,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesListenerDiscovery(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $discovery = $container->getByType(ListenerDiscovery::class);
@@ -129,7 +129,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesEventDispatcher(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $dispatcher = $container->getByType(EventDispatcherInterface::class);
@@ -140,7 +140,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesTemplateEngine(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $engine = $container->getByType(TemplateEngine::class);
@@ -151,7 +151,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerProvidesTaskRunner(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $runner = $container->getByType(TaskRunner::class);
@@ -162,7 +162,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerCachesCompilation(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         // Create container twice
         $container1 = $factory->create();
@@ -175,7 +175,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerCreatesCacheDirectory(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $factory->create();
 
@@ -185,11 +185,11 @@ final class ContainerFactoryTest extends TestCase
     public function testCacheInvalidatesWhenConfigChanges(): void
     {
         $config1 = new Configuration(['variables' => ['constants' => ['foo' => 'bar']]]);
-        $factory1 = new ContainerFactory($config1, $this->tempDir, 'default');
+        $factory1 = new ContainerFactory($config1, $this->tempDir, $this->tempDir, 'default');
         $container1 = $factory1->create();
 
         $config2 = new Configuration(['variables' => ['constants' => ['foo' => 'baz']]]);
-        $factory2 = new ContainerFactory($config2, $this->tempDir, 'default');
+        $factory2 = new ContainerFactory($config2, $this->tempDir, $this->tempDir, 'default');
         $container2 = $factory2->create();
 
         $this->assertNotSame($container1::class, $container2::class);
@@ -198,10 +198,10 @@ final class ContainerFactoryTest extends TestCase
     public function testCacheInvalidatesWhenContextChanges(): void
     {
         $config = new Configuration([]);
-        $factory1 = new ContainerFactory($config, $this->tempDir, 'dev');
+        $factory1 = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'dev');
         $container1 = $factory1->create();
 
-        $factory2 = new ContainerFactory($config, $this->tempDir, 'prod');
+        $factory2 = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'prod');
         $container2 = $factory2->create();
 
         $this->assertNotSame($container1::class, $container2::class);
@@ -227,14 +227,14 @@ final class ContainerFactoryTest extends TestCase
             PHP);
 
         $config = new Configuration(['tasks' => ['directories' => ['sputnik']]]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container1 = $factory->create();
 
         // Touch the task file to change its mtime
         sleep(1);
         touch($taskDir . '/FooTask.php');
 
-        $factory2 = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory2 = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container2 = $factory2->create();
 
         $this->assertNotSame($container1::class, $container2::class);
@@ -244,7 +244,7 @@ final class ContainerFactoryTest extends TestCase
     {
         $config = new Configuration([]);
 
-        $factoryDebug = new ContainerFactory($config, $this->tempDir, 'default', debugMode: true);
+        $factoryDebug = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default', debugMode: true);
         $containerDebug = $factoryDebug->create();
 
         // In debug mode, container class name should differ on each recompile
@@ -255,7 +255,7 @@ final class ContainerFactoryTest extends TestCase
     public function testContainerParametersAreSet(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'mycontext');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'mycontext');
 
         $container = $factory->create();
 

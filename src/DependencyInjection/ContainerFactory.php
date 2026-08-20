@@ -18,6 +18,7 @@ final class ContainerFactory
 
     public function __construct(
         private readonly Configuration $config,
+        private readonly ?string $projectDir,
         private readonly string $workingDir,
         private readonly string $contextName,
         private readonly bool $debugMode = false,
@@ -26,7 +27,7 @@ final class ContainerFactory
 
     public function create(): Container
     {
-        $cacheDir = $this->workingDir . '/' . self::CACHE_DIR;
+        $cacheDir = $this->cacheDir();
 
         if (!is_dir($cacheDir) && !mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
             throw new SputnikRuntimeException('Could not create cache directory: ' . $cacheDir);
@@ -43,6 +44,7 @@ final class ContainerFactory
             [
                 $this->config->all(),
                 $this->contextName,
+                $this->projectDir,
                 $this->workingDir,
                 $this->getTaskFilesHash(),
                 Application::VERSION,
@@ -51,6 +53,22 @@ final class ContainerFactory
         );
 
         return new $containerClass();
+    }
+
+    /**
+     * The compiled container belongs to the project. Without one there is
+     * nothing to keep between runs, and writing beside the caller is how a
+     * .sputnik directory appeared in every directory the binary was invoked
+     * from - so it goes to the system temp directory instead, keyed like any
+     * other build of this container.
+     */
+    private function cacheDir(): string
+    {
+        if ($this->projectDir !== null) {
+            return $this->projectDir . '/' . self::CACHE_DIR;
+        }
+
+        return sys_get_temp_dir() . '/sputnik-cache-' . md5(Application::VERSION);
     }
 
     /**
@@ -71,7 +89,7 @@ final class ContainerFactory
     private function getTaskFilesHash(): string
     {
         $files = [];
-        $directories = $this->config->getTaskDirectories($this->workingDir);
+        $directories = $this->config->getTaskDirectories($this->projectDir ?? $this->workingDir);
 
         foreach ($directories as $directory) {
             if (!is_dir($directory)) {
@@ -99,6 +117,7 @@ final class ContainerFactory
         // Add parameters
         $compiler->addConfig([
             'parameters' => [
+                'projectDir' => $this->projectDir,
                 'workingDir' => $this->workingDir,
                 'contextName' => $this->contextName,
                 'debug' => $this->debugMode,
@@ -106,6 +125,6 @@ final class ContainerFactory
         ]);
 
         // Add extensions
-        $compiler->addExtension('sputnik', new SputnikExtension($this->config, $this->workingDir));
+        $compiler->addExtension('sputnik', new SputnikExtension($this->config, $this->projectDir ?? $this->workingDir, $this->workingDir));
     }
 }

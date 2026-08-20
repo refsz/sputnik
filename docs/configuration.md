@@ -14,6 +14,11 @@ Sputnik is configured using [NEON](https://ne-on.org/) files located in the proj
 
 Both files are automatically loaded and deep-merged. Nested keys are merged recursively, scalar values are replaced. Either file can exist on its own.
 
+Whichever of them exists marks the **project directory**, which Sputnik looks for
+upwards from the current directory. Paths declared in the config -- task
+directories, template sources and targets -- resolve against it, not against
+wherever you happened to run the command from.
+
 See [Project Structure](project-structure.md) for details on file locations and `.gitignore` recommendations.
 
 ---

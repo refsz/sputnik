@@ -30,7 +30,7 @@ final class SecretServicesWiringTest extends TestCase
     public function testContainerProvidesSecretRedactor(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $redactor = $container->getByType(SecretRedactor::class);
@@ -41,7 +41,7 @@ final class SecretServicesWiringTest extends TestCase
     public function testContainerProvidesSecretRegistry(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $registry = $container->getByType(SecretRegistry::class);
@@ -66,7 +66,7 @@ final class SecretServicesWiringTest extends TestCase
                 ],
             ],
         ]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
 
         $container = $factory->create();
         $resolver = $container->getByType(VariableResolver::class);

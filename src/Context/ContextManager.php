@@ -17,7 +17,12 @@ final class ContextManager
 
     public function __construct(
         private readonly Configuration $config,
-        private readonly string $workingDir,
+        /**
+         * The project directory, or null when there is no project - a context
+         * cannot be remembered for something that does not exist, and writing
+         * it next to the caller is how stray .sputnik directories appeared.
+         */
+        private readonly ?string $projectDir,
     ) {
     }
 
@@ -120,24 +125,26 @@ final class ContextManager
     /**
      * Get the state directory path.
      */
-    public function getStateDir(): string
+    public function getStateDir(): ?string
     {
-        return $this->workingDir . '/' . self::STATE_DIR;
+        return $this->projectDir === null ? null : $this->projectDir . '/' . self::STATE_DIR;
     }
 
     /**
      * Get the state file path.
      */
-    public function getStateFilePath(): string
+    public function getStateFilePath(): ?string
     {
-        return $this->getStateDir() . '/' . self::STATE_FILE;
+        $dir = $this->getStateDir();
+
+        return $dir === null ? null : $dir . '/' . self::STATE_FILE;
     }
 
     private function loadPersistedContext(): ?string
     {
         $path = $this->getStateFilePath();
 
-        if (file_exists($path)) {
+        if ($path !== null && file_exists($path)) {
             $content = file_get_contents($path);
             if ($content === false) {
                 return null;
@@ -156,7 +163,13 @@ final class ContextManager
 
     private function migrateOldStateFile(): ?string
     {
-        $oldPath = $this->getStateDir() . '/context';
+        $dir = $this->getStateDir();
+
+        if ($dir === null) {
+            return null;
+        }
+
+        $oldPath = $dir . '/context';
 
         if (!file_exists($oldPath)) {
             return null;
@@ -182,6 +195,10 @@ final class ContextManager
     {
         $dir = $this->getStateDir();
 
+        if ($dir === null) {
+            return;
+        }
+
         if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
             throw new SputnikRuntimeException('Could not create state directory: ' . $dir);
         }
@@ -192,13 +209,14 @@ final class ContextManager
             'version' => 1,
         ];
 
+        $path = $dir . '/' . self::STATE_FILE;
         $result = file_put_contents(
-            $this->getStateFilePath(),
+            $path,
             json_encode($state, \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES) . "\n",
         );
 
         if ($result === false) {
-            throw new SputnikRuntimeException('Could not write state file: ' . $this->getStateFilePath());
+            throw new SputnikRuntimeException('Could not write state file: ' . $path);
         }
     }
 }

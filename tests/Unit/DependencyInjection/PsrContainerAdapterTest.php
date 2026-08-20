@@ -23,7 +23,7 @@ final class PsrContainerAdapterTest extends TestCase
         $this->tempDir = $this->createTempDir();
 
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $netteContainer = $factory->create();
         $this->adapter = new PsrContainerAdapter($netteContainer);
     }

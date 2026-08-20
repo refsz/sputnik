@@ -42,7 +42,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesTasksDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Task should be registered with tag
@@ -58,7 +58,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesListenersDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Listener should be registered with tag
@@ -77,7 +77,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesListenersDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Get dispatcher and dispatch event
@@ -94,7 +94,7 @@ final class SputnikExtensionTest extends TestCase
     public function testBuiltinListenersAreRegistered(): void
     {
         $config = new Configuration([]);
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Core listeners are hardwired (not tagged) — verify by service name
@@ -114,7 +114,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesTasksDir, $this->fixturesListenersDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Tasks from fixtures dir
@@ -135,7 +135,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesTasksDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         // Task should be resolvable (autowiring should work)
@@ -162,7 +162,7 @@ final class SputnikExtensionTest extends TestCase
             'tasks' => ['directories' => [$this->fixturesListenersDir]],
         ]);
 
-        $factory = new ContainerFactory($config, $this->tempDir, 'default');
+        $factory = new ContainerFactory($config, $this->tempDir, $this->tempDir, 'default');
         $container = $factory->create();
 
         $taggedServices = $container->findByTag('sputnik.listener');
