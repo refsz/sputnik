@@ -1013,6 +1013,41 @@ final class SputnikBinaryTest extends TestCase
         $this->assertDirectoryExists($this->tempDir . '/.sputnik');
     }
 
+    public function testATaskCanRunInADirectoryOutsideItsProject(): void
+    {
+        // Standing in a project and pointing --working-dir somewhere unrelated
+        // has to keep the project: otherwise the tasks are gone, which is what
+        // both this and the previous behaviour did.
+        $this->scaffoldProject([
+            'where' => <<<'PHP'
+                #[Task(name: 'where', description: 'Reports its directories')]
+                final class WhereTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('cwd=' . getcwd());
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $unrelated = \dirname($this->tempDir) . '/sputnik-unrelated-' . getmypid();
+        mkdir($unrelated, 0755, true);
+
+        try {
+            $result = $this->sputnik(['--working-dir=' . $unrelated, 'where'], $this->tempDir);
+
+            $this->assertSame(0, $result->getExitCode(), 'The project has to survive an unrelated working directory');
+            $this->assertStringContainsString('cwd=' . $unrelated, $result->getOutput());
+            $this->assertSame(['.', '..'], scandir($unrelated), 'And nothing may be written there');
+            $this->assertDirectoryExists($this->tempDir . '/.sputnik');
+        } finally {
+            @rmdir($unrelated);
+        }
+    }
+
     public function testInitStillScaffoldsWhereThereIsNoProject(): void
     {
         $empty = $this->tempDir . '/fresh';

@@ -83,7 +83,12 @@ if ($workingDirOption !== null && !is_dir($workingDirOption)) {
     exit(1);
 }
 
-$projectDir = Sputnik\Support\ProjectLocator::locate($workingDirOption ?? $cwd);
+// If --working-dir points somewhere with no project of its own, the project you
+// are standing in is kept: running a task in an unrelated directory must not take
+// the tasks away. Where both have one, the explicit argument wins.
+$projectDir = $workingDirOption === null
+    ? Sputnik\Support\ProjectLocator::locate($cwd)
+    : Sputnik\Support\ProjectLocator::locate($workingDirOption) ?? Sputnik\Support\ProjectLocator::locate($cwd);
 $workingDir = $workingDirOption ?? $projectDir ?? $cwd;
 $resolvedWorkingDir = realpath($workingDir);
 

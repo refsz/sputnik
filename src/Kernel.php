@@ -61,7 +61,12 @@ final class Kernel
         $cwdResult = getcwd();
         $cwd = $cwdResult !== false ? $cwdResult : throw new SputnikRuntimeException('Could not determine working directory');
 
-        $this->projectDir = $projectDir ?? ProjectLocator::locate($workingDir ?? $cwd);
+        // A working directory without a project of its own keeps the project of
+        // the current directory, so a task can run somewhere unrelated without
+        // losing the tasks.
+        $this->projectDir = $projectDir
+            ?? ProjectLocator::locate($workingDir ?? $cwd)
+            ?? ($workingDir === null ? null : ProjectLocator::locate($cwd));
         $this->workingDir = $workingDir ?? $this->projectDir ?? $cwd;
         $this->debugMode = $debugMode;
 

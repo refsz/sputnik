@@ -28,14 +28,25 @@ Change where tasks run -- the cwd of `exec()` and `shell()`, and what relative
 file access in a task resolves against. Sputnik enters that directory, so
 `file_exists('.env')` in a task and the commands it runs see the same place.
 
-It does **not** move the project. The config, the persisted context and the
-container cache stay in the [project directory](project-structure.md#the-project-directory),
-which is found by searching upwards. Without this option, tasks run in the
-project directory.
+It does **not** move the project by itself. The config, the persisted context and
+the container cache stay in the
+[project directory](project-structure.md#the-project-directory), which is found
+by searching upwards. Without this option, tasks run in the project directory.
 
 ```bash
 sputnik --working-dir=frontend npm:ci    # runs in frontend/, state stays at the root
 ```
+
+Which project applies is decided by what sits at or above the directory you name:
+
+| `--working-dir` points at | Project used |
+|---|---|
+| a subdirectory of your project | yours -- the search walks up into it |
+| a directory with no config above it | yours -- running somewhere unrelated does not take your tasks away |
+| a different project | **that** one, with its own tasks and its own state |
+
+The last row is the rule in short: naming a directory behaves as if you had `cd`'d
+there, and only a directory with no project of its own leaves you with yours.
 
 A relative path is resolved against the directory you called from. If the
 directory does not exist, Sputnik says so and stops.
