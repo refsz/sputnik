@@ -176,14 +176,35 @@ final class TaskDiscoveryTest extends TestCase
     public function testAProjectTaskMayTakeTheInitName(): void
     {
         // Scaffolding a project happens once; a project command named init may
-        // well be a daily one. The built-in loses, but says so.
+        // well be a daily one. The built-in loses.
         $discovery = new TaskDiscovery([$this->fixture('ShadowsInit')]);
 
         $tasks = $discovery->discoverAll();
 
         $this->assertArrayHasKey('init', $tasks);
+    }
+
+    public function testShadowingIsANoticeNotAWarning(): void
+    {
+        // Nothing is broken: the project asked for this and it works. Repeating
+        // it on every unrelated command is noise, so it stays a -v diagnostic.
+        $discovery = new TaskDiscovery([$this->fixture('ShadowsInit')]);
+        $discovery->discoverAll();
+
+        $this->assertSame([], $discovery->getWarnings());
+        $this->assertCount(1, $discovery->getNotices());
+        $this->assertStringContainsString('shadows', $discovery->getNotices()[0]);
+    }
+
+    public function testASkippedTaskStaysAWarning(): void
+    {
+        // Here something the user wrote does not work, and that does not stop
+        // being true on the next command.
+        $discovery = new TaskDiscovery([$this->fixture('CollidesWithStructural')]);
+        $discovery->discoverAll();
+
         $this->assertCount(1, $discovery->getWarnings());
-        $this->assertStringContainsString('shadows', $discovery->getWarnings()[0]);
+        $this->assertSame([], $discovery->getNotices());
     }
 
     public function testReservedOptionNameThrows(): void

@@ -58,6 +58,11 @@ final class TaskDiscovery
     private array $warnings = [];
 
     /**
+     * @var list<string>
+     */
+    private array $notices = [];
+
+    /**
      * @param array<string>      $directories Directories to scan for tasks
      * @param list<class-string> $classes     Explicit task classes to register
      */
@@ -74,23 +79,26 @@ final class TaskDiscovery
      * @param array<string, TaskMetadata> $tasks
      * @param array<string, string>       $aliasMap
      * @param list<string>                $warnings
+     * @param list<string>                $notices
      */
-    public static function withPreloadedData(array $tasks, array $aliasMap, array $warnings = []): self
+    public static function withPreloadedData(array $tasks, array $aliasMap, array $warnings = [], array $notices = []): self
     {
         $instance = new self([]);
         $instance->tasks = $tasks;
         $instance->aliasMap = $aliasMap;
         $instance->warnings = $warnings;
+        $instance->notices = $notices;
         $instance->discovered = true;
 
         return $instance;
     }
 
     /**
-     * Problems that made discovery skip something, or that changed which
-     * command a name resolves to. Carried through the container cache, because
-     * discovery only runs when that cache is cold - a warning shown once and
-     * then forgotten would be worse than none.
+     * Something the author wrote does not work: a task was skipped, an alias
+     * dropped. That stays true on the next command, so these are shown every
+     * time. Carried through the container cache, because discovery only runs
+     * when that cache is cold - a warning shown once and then forgotten would
+     * be worse than none.
      *
      * @return list<string>
      */
@@ -99,6 +107,21 @@ final class TaskDiscovery
         $this->discoverAll();
 
         return $this->warnings;
+    }
+
+    /**
+     * Something took effect as asked, but is worth knowing when you are looking
+     * for it - a project task that took over a built-in name. Nothing is broken,
+     * so repeating it on every unrelated command would be noise; these surface
+     * with -v.
+     *
+     * @return list<string>
+     */
+    public function getNotices(): array
+    {
+        $this->discoverAll();
+
+        return $this->notices;
     }
 
     /**
@@ -248,7 +271,7 @@ final class TaskDiscovery
         }
 
         if (\in_array($taskAttribute->name, self::SHADOWABLE_NAMES, true)) {
-            $this->warnings[] = \sprintf(
+            $this->notices[] = \sprintf(
                 "Task '%s' in %s shadows the built-in %s command, which is no longer reachable",
                 $taskAttribute->name,
                 $reflection->getFileName() !== false ? $reflection->getFileName() : $className,
