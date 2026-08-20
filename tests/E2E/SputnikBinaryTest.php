@@ -874,6 +874,74 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringNotContainsString('mkdir', $output, 'The cache is a symptom, not the problem');
     }
 
+    public function testCompletionScriptIsNotPollutedByDiagnostics(): void
+    {
+        // The completion script is written to a file. A warning on stdout landed
+        // in it as line one, and --silent/-q cannot help: they suppress the
+        // script along with the warning.
+        $this->scaffoldProject([
+            'list' => <<<'PHP'
+                #[Task(name: 'list', description: 'Collides with a built-in')]
+                final class ListTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['completion', 'bash'], $this->tempDir);
+
+        $this->assertStringStartsWith('#', ltrim($result->getOutput()));
+        $this->assertStringNotContainsString('Skipped task', $result->getOutput());
+        $this->assertStringContainsString('Skipped task', $result->getErrorOutput());
+    }
+
+    public function testListInAMachineReadableFormatIsParseable(): void
+    {
+        $this->scaffoldProject([
+            'deploy' => <<<'PHP'
+                #[Task(name: 'deploy', description: 'Deploy it')]
+                final class DeployTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['list', '--format=json'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertIsArray(json_decode($result->getOutput(), true), 'The header and the task section used to surround the JSON');
+    }
+
+    public function testTheDefaultListKeepsItsHeaderAndTaskSection(): void
+    {
+        $this->scaffoldProject([
+            'deploy' => <<<'PHP'
+                #[Task(name: 'deploy', description: 'Deploy it')]
+                final class DeployTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $output = $this->sputnik(['list'], $this->tempDir)->getOutput();
+
+        $this->assertStringContainsString('Sputnik', $output);
+        $this->assertStringContainsString('Available tasks', $output);
+        $this->assertStringContainsString('deploy', $output);
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(

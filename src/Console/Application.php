@@ -8,6 +8,7 @@ use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskMetadata;
 use Symfony\Component\Console\Application as BaseApplication;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 final class Application extends BaseApplication
@@ -70,20 +71,33 @@ final class Application extends BaseApplication
         $commandName = $this->getCommandName($input);
         $isList = $commandName === null || $commandName === 'list';
 
-        // Reported here, not while the application is assembled: -v is parsed by
-        // run(), so verbosity is not known any earlier.
+        // Anything else is a format meant for a machine - json, xml, md - or the
+        // raw list used to embed a command runner. Decoration would land in the
+        // middle of it.
+        $isReadableList = $isList
+            && $input->getParameterOption('--format', 'txt') === 'txt'
+            && !$input->hasParameterOption('--raw');
+
+        // Diagnostics go to stderr: `completion bash > file` and
+        // `list --format=json` both put stdout into something that parses it, and
+        // --silent cannot separate the two - it removes the payload as well.
+        //
+        // Reported here rather than while the application is assembled, because
+        // -v is parsed by run() and verbosity is not known any earlier.
+        $diagnostics = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
+
         foreach ($this->discoveryWarnings as $warning) {
-            $output->writeln('<comment>' . $warning . '</comment>');
+            $diagnostics->writeln('<comment>' . $warning . '</comment>');
         }
 
         if ($output->isVerbose()) {
             foreach ($this->discoveryNotices as $notice) {
-                $output->writeln('<comment>' . $notice . '</comment>');
+                $diagnostics->writeln('<comment>' . $notice . '</comment>');
             }
         }
 
         // Show our header instead of Symfony's "AppName version" for list
-        if ($isList) {
+        if ($isReadableList) {
             $output->writeln(\sprintf(
                 "\xF0\x9F\x9B\xB0  <fg=green;options=bold>Sputnik %s</> <fg=gray>│</> %s <fg=gray>│</> %s",
                 self::VERSION,
@@ -95,7 +109,7 @@ final class Application extends BaseApplication
 
         $result = parent::doRun($input, $output);
 
-        if ($isList && $this->taskDiscovery instanceof TaskDiscovery) {
+        if ($isReadableList && $this->taskDiscovery instanceof TaskDiscovery) {
             $this->renderTaskList($output);
         }
 

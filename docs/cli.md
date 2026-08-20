@@ -44,6 +44,16 @@ Values are automatically coerced: `true`/`false` to bool, numeric strings to int
 
 Available on both direct task commands (`sputnik deploy -D ...`) and the run command (`sputnik run deploy -D ...`).
 
+### `--format` on `list`
+
+`list` takes Symfony's `--format` (`txt`, `xml`, `json`, `md`) and `--raw`. For
+anything other than the default `txt`, Sputnik leaves the output alone: no
+header, no grouped task section, so the result is exactly what a parser expects.
+
+```bash
+sputnik list --format=json | jq '.commands[].name'
+```
+
 ### `-v` / `--verbose`
 
 Show additional output including log messages and stack traces on errors.
@@ -151,6 +161,12 @@ built-in command - rename the task or give it a group prefix
 
 The warning appears on every run, not only the one that filled the container
 cache -- the task stays missing until someone renames it.
+
+It is written to **stderr**, along with every other diagnostic Sputnik emits
+about itself. That keeps stdout usable as data: `sputnik completion bash > file`
+writes only the script, and `sputnik list --format=json` parses. Redirect stderr
+if you want it gone -- `--silent` and `-q` are the wrong tool, they suppress the
+payload with it.
 
 `init` is different: a project task may take it, and then the built-in scaffold
 is no longer reachable. Scaffolding a project happens once, while a project
