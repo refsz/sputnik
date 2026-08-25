@@ -1152,6 +1152,82 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('a log line only -v shows', $result->getOutput());
     }
 
+    public function testAFailingListenerLeavesTheContextWhereItWas(): void
+    {
+        // The switch used to be persisted before its listeners ran, so a
+        // listener that failed left the new context in state.json while the work
+        // that belongs to it - composer install, template rendering - had not
+        // happened. The next command then ran as the new context on a project
+        // only half prepared for it.
+        // Listeners are discovered from the task directories.
+        $this->scaffoldConfig(<<<'NEON'
+            tasks:
+                directories:
+                    - sputnik
+
+            contexts:
+                local:
+                    description: Local
+                staging:
+                    description: Staging
+
+            defaults:
+                context: local
+            NEON);
+
+        mkdir($this->tempDir . '/sputnik', 0755, true);
+        file_put_contents($this->tempDir . '/sputnik/FailingListener.php', <<<'PHP'
+            <?php
+            declare(strict_types=1);
+
+            use Sputnik\Attribute\AsListener;
+            use Sputnik\Event\ContextSwitchedEvent;
+
+            #[AsListener(event: ContextSwitchedEvent::class, priority: -50)]
+            final class FailingListener
+            {
+                public function __invoke(ContextSwitchedEvent $event): void
+                {
+                    throw new \RuntimeException('the work for this context failed');
+                }
+            }
+            PHP);
+
+        $result = $this->sputnik(['context:switch', 'staging'], $this->tempDir);
+        $output = $result->getOutput() . $result->getErrorOutput();
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $this->assertStringContainsString('the work for this context failed', $output);
+
+        $state = $this->tempDir . '/.sputnik/state.json';
+
+        if (file_exists($state)) {
+            $this->assertStringNotContainsString('staging', (string) file_get_contents($state), 'The switch must not outlive a failed listener');
+        }
+
+        // And the next command still runs in the old context.
+        $this->assertStringContainsString('local', $this->sputnik(['context:list'], $this->tempDir)->getOutput());
+    }
+
+    public function testASuccessfulSwitchIsStillPersisted(): void
+    {
+        $this->scaffoldConfig(<<<'NEON'
+            contexts:
+                local:
+                    description: Local
+                staging:
+                    description: Staging
+
+            defaults:
+                context: local
+            NEON);
+
+        $result = $this->sputnik(['context:switch', 'staging'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('staging', (string) file_get_contents($this->tempDir . '/.sputnik/state.json'));
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(

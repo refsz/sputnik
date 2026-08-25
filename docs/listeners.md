@@ -158,6 +158,29 @@ Listeners are discovered from the same directories as tasks. A listener must:
 
 The class name does not matter -- only the attribute determines discovery.
 
+## Reporting a failure
+
+A listener returns nothing, so **throwing is how it reports that its work did not
+happen**. A command that fails is not a failure by itself -- as in a task, the
+result is yours to check:
+
+```php
+public function __invoke(ContextSwitchedEvent $event): void
+{
+    $result = $this->executor->execute(['composer', 'install', '--no-interaction']);
+
+    if (!$result->isSuccessful()) {
+        throw new \RuntimeException('composer install failed after the context switch');
+    }
+}
+```
+
+Without the check, the command's output is visible but the run still reports
+success -- and for `ContextSwitchedEvent` that used to mean the new context was
+remembered while the work belonging to it had not been done. An exception
+prevents that: the switch is not persisted, and the message names the file and
+line it came from.
+
 ## Priority Order
 
 Higher priority runs first.

@@ -37,11 +37,21 @@ sputnik use prod
 
 ## What Happens on Switch
 
-1. Context is persisted to `.sputnik/state.json`
-2. `ContextSwitchedEvent` is dispatched
-3. Built-in listener `SwitchContextOnServices` (priority 100) updates VariableResolver and TemplateEngine
-4. Built-in listener `RegenerateTemplatesOnContextSwitch` (priority 0) re-renders all templates
-5. Custom listeners run (use negative priority to run after templates)
+1. `ContextSwitchedEvent` is dispatched
+2. Built-in listener `SwitchContextOnServices` (priority 100) updates VariableResolver and TemplateEngine
+3. Built-in listener `RegenerateTemplatesOnContextSwitch` (priority 0) re-renders all templates
+4. Custom listeners run (use negative priority to run after templates)
+5. The context is persisted to `.sputnik/state.json`
+
+!!! info "The switch is written down last"
+    Switching a context means preparing the project for it -- regenerating
+    templates, reinstalling dependencies. If a listener fails, the switch is
+    **not** persisted: the previous context stays active and the command exits
+    non-zero, so you can fix the cause and try again.
+
+    Listeners do not need the persisted value to know where they are. They read
+    the new context from the event, and `SwitchContextOnServices` puts the
+    resolver and the template engine on it before any other listener runs.
 
 ## Listing Contexts
 

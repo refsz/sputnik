@@ -63,9 +63,22 @@ final class ContextSwitchCommand extends Command
         $contextName = $input->getArgument('context');
 
         try {
-            $result = $this->contextManager->switchTo($contextName);
+            if (!\is_string($contextName)) {
+                $io->error('A context name is required');
 
-            if ($result['previous'] === $result['new']) {
+                return Command::FAILURE;
+            }
+
+            if (!$this->contextManager->isValidContext($contextName)) {
+                throw ContextNotFoundException::forContext(
+                    $contextName,
+                    $this->contextManager->getAvailableContexts(),
+                );
+            }
+
+            $previous = $this->contextManager->getCurrentContext();
+
+            if ($previous === $contextName) {
                 $io->note('Already in context: ' . $contextName);
 
                 return Command::SUCCESS;
@@ -78,11 +91,24 @@ final class ContextSwitchCommand extends Command
                 );
             }
 
-            // Dispatch event
-            $event = new ContextSwitchedEvent($result['previous'], $result['new']);
+            // Listeners first, then the switch is written down. Switching a
+            // context means preparing the project for it - regenerating
+            // templates, reinstalling dependencies - and a switch whose
+            // preparation failed should not outlive the process. Persisting
+            // first left state.json naming the new context while the work for it
+            // had not happened, and the next command ran on a half-prepared
+            // project.
+            //
+            // Listeners do not need the persisted value: they read the context
+            // from the event, and SwitchContextOnServices (priority 100) puts the
+            // resolver and the template engine on the new one before any other
+            // listener runs.
+            $event = new ContextSwitchedEvent($previous, $contextName);
             $this->eventDispatcher->dispatch($event);
 
-            $io->success(\sprintf("Switched from '%s' to '%s'", $result['previous'], $result['new']));
+            $this->contextManager->switchTo($contextName);
+
+            $io->success(\sprintf("Switched from '%s' to '%s'", $previous, $contextName));
 
             // Show context description if available
             $description = $this->contextManager->getContextDescription($contextName);
