@@ -224,6 +224,50 @@ Returns `ExecutionResult` with:
 | `getErrorOutput()` | Stderr, same value as the property |
 | `getCombinedOutput()` | Stdout and stderr together |
 
+### Pass-through tasks
+
+A task whose job is to forward arguments to another tool -- `drush`, `composer`,
+`npm` -- has to receive them untouched. Declare it as pass-through:
+
+```php
+#[Task(name: 'drush', description: 'Run any drush command', passthrough: true)]
+final class DrushTask implements TaskInterface
+{
+    #[Argument(name: 'args', description: 'Arguments passed to drush', isArray: true)]
+    private array $args;
+
+    public function __invoke(TaskContext $ctx): TaskResult
+    {
+        return $ctx->exec(['vendor/bin/drush', ...$ctx->argument('args', [])])->isSuccessful()
+            ? TaskResult::success()
+            : TaskResult::failure('drush failed');
+    }
+}
+```
+
+Everything after the task name then goes to the task, options included:
+
+```bash
+sputnik drush cr -l default
+sputnik drush sql:dump --result-file=dump.sql
+sputnik drush --version          # drush's version, not Sputnik's
+```
+
+Without this, an option Sputnik does not know is rejected, and one it does know
+is consumed on the way: `-v` never reaches the tool, and `--version` prints
+Sputnik's own version without running the task at all.
+
+Sputnik's own options go **before** the task name, as with `git` and `docker`:
+
+```bash
+sputnik -v drush status          # -v applies to Sputnik
+sputnik drush status -v          # -v goes to drush
+```
+
+A pass-through task needs an array argument to receive the forwarded values, and
+cannot declare options of its own -- they could never be reached. Both are
+rejected when the task is discovered.
+
 ### Sub-tasks
 
 ```php

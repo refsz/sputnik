@@ -1060,6 +1060,98 @@ final class SputnikBinaryTest extends TestCase
         $this->assertFileExists($empty . '/sputnik/ExampleTask.php');
     }
 
+    public function testAPassthroughTaskReceivesOptionsMeantForTheWrappedTool(): void
+    {
+        // Without this, `sputnik drush cr -l default` fails with "The -l option
+        // does not exist", -v is swallowed by Sputnik, and --version prints
+        // Sputnik's version without running the task at all.
+        $this->scaffoldProject([
+            'wrap' => <<<'PHP'
+                #[Task(name: 'wrap', description: 'Forwards everything', passthrough: true)]
+                final class WrapTask implements TaskInterface
+                {
+                    #[Argument(name: 'args', description: 'Forwarded', isArray: true)]
+                    private array $args;
+
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->writeln('args=' . implode('|', $ctx->argument('args', [])));
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $cases = [
+            [['cr', '-l', 'default'], 'cr|-l|default'],
+            [['--uri=https://example.test'], '--uri=https://example.test'],
+            [['status', '-v'], 'status|-v'],
+            [['--version'], '--version'],
+        ];
+
+        foreach ($cases as [$arguments, $expected]) {
+            $result = $this->sputnik(['wrap', ...$arguments], $this->tempDir);
+
+            $this->assertSame(0, $result->getExitCode(), 'Failed for: ' . implode(' ', $arguments));
+            $this->assertStringContainsString('args=' . $expected, $result->getOutput());
+        }
+    }
+
+    public function testAnOrdinaryTaskStillRejectsAnUnknownOption(): void
+    {
+        // Forwarding must be opt-in: a typo in an option name has to stay an
+        // error for every task that does not ask for pass-through.
+        $this->scaffoldProject([
+            'plain' => <<<'PHP'
+                #[Task(name: 'plain', description: 'Ordinary')]
+                final class PlainTask implements TaskInterface
+                {
+                    #[Argument(name: 'args', description: 'Arguments', isArray: true)]
+                    private array $args;
+
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['plain', '--nonsense'], $this->tempDir);
+
+        $this->assertNotSame(0, $result->getExitCode());
+        $this->assertStringContainsString('nonsense', $result->getOutput() . $result->getErrorOutput());
+    }
+
+    public function testSputnikOptionsStillWorkBeforeAPassthroughTaskName(): void
+    {
+        $this->scaffoldProject([
+            'wrap' => <<<'PHP'
+                #[Task(name: 'wrap', description: 'Forwards everything', passthrough: true)]
+                final class WrapTask implements TaskInterface
+                {
+                    #[Argument(name: 'args', description: 'Forwarded', isArray: true)]
+                    private array $args;
+
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->info('a log line only -v shows');
+                        $ctx->writeln('args=' . implode('|', $ctx->argument('args', [])));
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(['-v', 'wrap', 'status'], $this->tempDir);
+
+        $this->assertSame(0, $result->getExitCode());
+        $this->assertStringContainsString('args=status', $result->getOutput());
+        $this->assertStringContainsString('a log line only -v shows', $result->getOutput());
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(

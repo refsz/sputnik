@@ -260,6 +260,28 @@ final class TaskDiscovery
             arguments: $arguments,
         );
 
+        if ($taskAttribute->passthrough) {
+            // Everything after the name goes to the wrapped tool, so a declared
+            // option can never arrive - and without an array argument there is
+            // nowhere for the forwarded words to land.
+            if ($options !== []) {
+                throw new TaskDiscoveryException(\sprintf(
+                    "Task '%s' is passthrough, so its option '%s' can never be reached: everything after the task name goes to the wrapped command",
+                    $taskAttribute->name,
+                    array_values($options)[0]->name,
+                ));
+            }
+
+            $hasArrayArgument = array_filter($arguments, static fn (Argument $argument): bool => $argument->isArray);
+
+            if ($hasArrayArgument === []) {
+                throw new TaskDiscoveryException(\sprintf(
+                    "Task '%s' is passthrough but declares no array argument to receive the forwarded arguments",
+                    $taskAttribute->name,
+                ));
+            }
+        }
+
         if (\in_array($taskAttribute->name, self::RESERVED_NAMES, true)) {
             $this->warnings[] = \sprintf(
                 "Skipped task '%s' in %s: the name is reserved by a built-in command - rename the task or give it a group prefix",

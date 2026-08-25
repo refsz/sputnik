@@ -47,6 +47,15 @@ final class TaskMetadata
         return $this->attribute->group;
     }
 
+    /**
+     * A task that forwards what follows its name to another tool, so Sputnik
+     * must not interpret those arguments as its own.
+     */
+    public function isPassthrough(): bool
+    {
+        return $this->attribute->passthrough;
+    }
+
     public function isHidden(): bool
     {
         return $this->attribute->hidden;
