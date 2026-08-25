@@ -162,6 +162,11 @@ Generate shell completion scripts.
 
 Restart your shell or source the completion file to activate.
 
+Completion covers the core commands, your task names and their aliases, and a
+task's own options once its name is typed out. The script asks the binary at the
+moment you press TAB, so a new Sputnik version needs no reinstall -- replacing the
+PHAR is enough.
+
 ## Pass-through tasks and `--`
 
 A task declared with `passthrough: true` receives everything after its name,

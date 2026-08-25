@@ -7,6 +7,8 @@ namespace Sputnik\Console;
 use Sputnik\Task\TaskDiscovery;
 use Sputnik\Task\TaskMetadata;
 use Symfony\Component\Console\Application as BaseApplication;
+use Symfony\Component\Console\Completion\CompletionInput;
+use Symfony\Component\Console\Completion\CompletionSuggestions;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -64,6 +66,39 @@ final class Application extends BaseApplication
     public function getHelp(): string
     {
         return '';
+    }
+
+    /**
+     * Task names are missing from the completion otherwise. They are registered
+     * hidden so that renderTaskList() stays the only list, and Symfony filters
+     * hidden commands out of the suggestions for the command argument - hiding
+     * and not-suggesting hang off the same property. Hiding stays right, so the
+     * names are supplied here.
+     */
+    #[\Override]
+    public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
+    {
+        parent::complete($input, $suggestions);
+
+        if (!$input->mustSuggestArgumentValuesFor('command')) {
+            return;
+        }
+
+        if (!$this->taskDiscovery instanceof TaskDiscovery) {
+            return;
+        }
+
+        foreach ($this->taskDiscovery->discoverAll() as $metadata) {
+            if ($metadata->isHidden()) {
+                continue;
+            }
+
+            $suggestions->suggestValue($metadata->getName());
+
+            foreach ($metadata->getAliases() as $alias) {
+                $suggestions->suggestValue($alias);
+            }
+        }
     }
 
     public function doRun(InputInterface $input, OutputInterface $output): int

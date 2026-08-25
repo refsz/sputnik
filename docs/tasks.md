@@ -201,10 +201,17 @@ $ctx->exec(['make', 'build'], [
     'tty' => true,
     'timeout' => 60,
 ]);
+
+$version = $ctx->exec(['git', 'rev-parse', 'HEAD'], ['quiet' => true])->getOutput();
 ```
 
 - `cwd` -- directory to run in (default: the project root). Prefer this over
   `shell('cd sub && ...')`, which puts the command back through a shell
+- `quiet` -- keep the command's output off the terminal. The result still carries
+  it, so use this for a command you run for its value rather than its progress --
+  a version string, a JSON payload, a generated script. Without it the value is
+  printed as if it were progress, and the only alternative would be a shell
+  redirect, which brings back a shell you do not need
 - `env` -- additional environment variables for the process
 - `tty` -- allocate a TTY (disables timeout automatically)
 - `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; pass `0` or `tty: true` to remove the limit

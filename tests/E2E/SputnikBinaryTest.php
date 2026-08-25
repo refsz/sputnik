@@ -1228,6 +1228,96 @@ final class SputnikBinaryTest extends TestCase
         $this->assertStringContainsString('staging', (string) file_get_contents($this->tempDir . '/.sputnik/state.json'));
     }
 
+    public function testTaskNamesAreOfferedByTheShellCompletion(): void
+    {
+        // Tasks are registered hidden so that Sputnik's own grouped list stays
+        // the only list - but Symfony's completion filters hidden commands out
+        // of the suggestions, so `sputnik <TAB>` offered core commands only.
+        $this->scaffoldProject([
+            'deploy' => <<<'PHP'
+                #[Task(name: 'ddev:start', description: 'Start it', aliases: ['up'])]
+                final class DeployTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(
+            ['_complete', '--shell=bash', '--api-version=1', '--input=sputnik ', '--current=1'],
+            $this->tempDir,
+        );
+        $suggestions = explode("\n", trim($result->getOutput()));
+
+        $this->assertContains('ddev:start', $suggestions);
+        $this->assertContains('up', $suggestions, 'An alias is a name a user types, so it belongs in the completion');
+        $this->assertContains('list', $suggestions, 'The core commands must stay');
+    }
+
+    public function testAHiddenTaskStaysOutOfTheCompletion(): void
+    {
+        $this->scaffoldProject([
+            'internal' => <<<'PHP'
+                #[Task(name: 'internal:thing', description: 'Not for hands', hidden: true)]
+                final class InternalTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        $result = $this->sputnik(
+            ['_complete', '--shell=bash', '--api-version=1', '--input=sputnik ', '--current=1'],
+            $this->tempDir,
+        );
+
+        $this->assertStringNotContainsString('internal:thing', $result->getOutput());
+    }
+
+    public function testAQuietCommandRunsWithoutStreamingItsOutput(): void
+    {
+        // A task that reads a command's output as data - a generated completion
+        // script, a JSON payload - had no way to keep it off the terminal.
+        //
+        // The payload comes from a file rather than an argument, so it cannot
+        // reach the terminal through the echoed command line - which still
+        // shows, because what is quiet is the output, not the fact that
+        // something ran.
+        $this->scaffoldProject([
+            'capture' => <<<'PHP'
+                #[Task(name: 'capture', description: 'Reads output as data')]
+                final class CaptureTask implements TaskInterface
+                {
+                    public function __invoke(TaskContext $ctx): TaskResult
+                    {
+                        $ctx->exec(['cat', 'loud.txt']);
+                        $quiet = $ctx->exec(['cat', 'quiet.txt'], ['quiet' => true]);
+
+                        $ctx->writeln('captured=' . $quiet->getOutput());
+
+                        return TaskResult::success();
+                    }
+                }
+                PHP,
+        ]);
+
+        file_put_contents($this->tempDir . '/loud.txt', 'LOUD-PAYLOAD');
+        file_put_contents($this->tempDir . '/quiet.txt', 'QUIET-PAYLOAD');
+
+        $output = $this->sputnik(['capture'], $this->tempDir)->getOutput();
+
+        $this->assertStringContainsString('LOUD-PAYLOAD', $output, 'The default stays unchanged');
+        $this->assertStringContainsString('captured=QUIET-PAYLOAD', $output, 'The value still reaches the task');
+        $this->assertSame(1, substr_count($output, 'QUIET-PAYLOAD'), 'The quiet command must not stream it as well');
+        $this->assertStringContainsString('cat quiet.txt', $output, 'The command line still shows what ran');
+    }
+
     private function sputnik(array $args, ?string $cwd = null): Process
     {
         $process = new Process(

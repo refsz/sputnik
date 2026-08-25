@@ -88,8 +88,8 @@ final class TaskContext
      * element and inserted verbatim - no shell reads them, so there is nothing
      * to escape. Use shell() when you need a pipe, a redirect or a glob.
      *
-     * @param list<string>                                                                  $command Program and arguments
-     * @param array{cwd?: string, env?: array<string, string>, tty?: bool, timeout?: float} $options Defaults to the project root as cwd
+     * @param list<string>                                                                                $command Program and arguments
+     * @param array{cwd?: string, env?: array<string, string>, tty?: bool, timeout?: float, quiet?: bool} $options Defaults to the project root as cwd; `quiet` keeps the output off the terminal
      *
      * @throws MissingVariableException If a required variable is missing
      */
@@ -109,6 +109,7 @@ final class TaskContext
             'env' => $options['env'] ?? [],
             'tty' => $options['tty'] ?? false,
             'timeout' => $options['timeout'] ?? null,
+            'quiet' => $options['quiet'] ?? false,
         ]);
     }
 
@@ -119,8 +120,8 @@ final class TaskContext
      * shell argument, so a value can never break out of its place in the command.
      * Example: $context->shell('echo {{ APP_ENV }}')
      *
-     * @param string                                                                        $command The command to execute (supports {{ VAR }} syntax)
-     * @param array{cwd?: string, env?: array<string, string>, tty?: bool, timeout?: float} $options Defaults to the project root as cwd
+     * @param string                                                                                      $command The command to execute (supports {{ VAR }} syntax)
+     * @param array{cwd?: string, env?: array<string, string>, tty?: bool, timeout?: float, quiet?: bool} $options Defaults to the project root as cwd; `quiet` keeps the output off the terminal
      *
      * @throws MissingVariableException If a required variable is missing
      */
@@ -133,6 +134,7 @@ final class TaskContext
             'env' => $options['env'] ?? [],
             'tty' => $options['tty'] ?? false,
             'timeout' => $options['timeout'] ?? null,
+            'quiet' => $options['quiet'] ?? false,
         ]);
     }
 
