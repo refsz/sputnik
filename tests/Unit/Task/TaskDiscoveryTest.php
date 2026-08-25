@@ -207,6 +207,27 @@ final class TaskDiscoveryTest extends TestCase
         $this->assertSame([], $discovery->getNotices());
     }
 
+    public function testAPassthroughTaskWithOptionsIsAContradiction(): void
+    {
+        // Everything after the name goes to the wrapped tool, so a declared
+        // option could never arrive - better to say so than to let the author
+        // wonder why it is ignored.
+        $discovery = new TaskDiscovery([$this->fixture('PassthroughWithOption')]);
+
+        $this->expectException(TaskDiscoveryException::class);
+        $this->expectExceptionMessageMatches('/passthrough.*option|option.*passthrough/i');
+        $discovery->discoverAll();
+    }
+
+    public function testAPassthroughTaskNeedsSomewhereToPutTheArguments(): void
+    {
+        $discovery = new TaskDiscovery([$this->fixture('PassthroughWithoutArgument')]);
+
+        $this->expectException(TaskDiscoveryException::class);
+        $this->expectExceptionMessageMatches('/array argument/i');
+        $discovery->discoverAll();
+    }
+
     public function testReservedOptionNameThrows(): void
     {
         $discovery = new TaskDiscovery([$this->fixture('ReservedOptionName')]);

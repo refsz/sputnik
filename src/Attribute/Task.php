@@ -14,6 +14,7 @@ final class Task
      * @param string|null   $group       Group for organizing tasks in list
      * @param bool          $hidden      Hide from task list (still executable)
      * @param string|null   $environment Restrict task to a specific environment (e.g., 'container', 'host')
+     * @param bool          $passthrough Forward everything after the task name to the task, options included
      */
     public function __construct(
         public readonly string $name,
@@ -22,6 +23,7 @@ final class Task
         public readonly ?string $group = null,
         public readonly bool $hidden = false,
         public readonly ?string $environment = null,
+        public readonly bool $passthrough = false,
     ) {
     }
 }

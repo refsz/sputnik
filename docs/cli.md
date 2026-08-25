@@ -162,6 +162,24 @@ Generate shell completion scripts.
 
 Restart your shell or source the completion file to activate.
 
+## Pass-through tasks and `--`
+
+A task declared with `passthrough: true` receives everything after its name,
+options included -- see [Writing Tasks](tasks.md#pass-through-tasks). Sputnik's
+own options go before the name:
+
+```bash
+sputnik -v drush status          # -v applies to Sputnik
+sputnik drush status -v          # -v goes to drush
+```
+
+For any other task, an option it does not declare is an error. `--` still works
+there to pass option-looking words as arguments:
+
+```bash
+sputnik mytask -- --not-an-option
+```
+
 ## Reserved Names
 
 ### Task Names

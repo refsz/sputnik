@@ -124,6 +124,20 @@ $output = new ConsoleOutput();
 // Bootstrap and run
 try {
     $kernel = new Kernel(workingDir: $workingDir, contextName: $contextOverride, projectDir: $projectDir);
+
+    // A pass-through task forwards what follows its name to another tool, so
+    // Sputnik must stop reading those arguments as its own. Inserting the `--`
+    // the user would otherwise have to type is enough: Symfony resolves
+    // --version, --help, -v and -q with onlyParams, so they stop applying to
+    // Sputnik past that point and reach the task instead.
+    //
+    // Needs the kernel, because whether a name is pass-through is a property of
+    // a discovered task, and Sputnik's own options keep working before the name.
+    $_SERVER['argv'] = Sputnik\Console\PassthroughArguments::insertSeparator(
+        $_SERVER['argv'],
+        $kernel->getDiscovery(),
+    );
+
     $output = new Sputnik\Secret\RedactingConsoleOutput($output, $kernel->getSecretRedactor());
 
     // Everything that writes shares this destination: tasks, the commands, and
