@@ -40,14 +40,14 @@ final class ShellExecutorTest extends TestCase
         $this->assertSame(42, $result->exitCode);
     }
 
-    public function testExecuteQuietSuppressesStreaming(): void
+    public function testTheQuietOptionSuppressesStreaming(): void
     {
         $output = new BufferedOutput();
         $channel = new OutputChannel();
         $channel->set($output);
         $executor = new ShellExecutor($channel);
 
-        $result = $executor->executeQuiet('echo "quiet test"');
+        $result = $executor->execute('echo "quiet test"', ['quiet' => true]);
 
         $this->assertTrue($result->isSuccessful());
         $this->assertStringContainsString('quiet test', $result->output);

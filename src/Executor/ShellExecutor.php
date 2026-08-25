@@ -28,8 +28,8 @@ final class ShellExecutor implements ExecutorInterface
     }
 
     /**
-     * @param list<string>|string                                                                $command
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool} $options
+     * @param list<string>|string                                                                              $command
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool, quiet?: bool} $options
      */
     public function execute(array|string $command, array $options = []): ExecutionResult
     {
@@ -40,6 +40,11 @@ final class ShellExecutor implements ExecutorInterface
         $env = $options['env'] ?? [];
         $tty = $options['tty'] ?? false;
         $timeout = $tty ? 0 : ($options['timeout'] ?? $this->defaultTimeout);
+
+        // The command line and its outcome still show - what a task asked to
+        // keep quiet is the output, because it wants it as a value rather than
+        // on the terminal.
+        $quiet = $options['quiet'] ?? false;
 
         $this->channel->sputnikOutput()?->command($display);
 
@@ -55,13 +60,19 @@ final class ShellExecutor implements ExecutorInterface
         $errorOutput = '';
 
         $this->activeProcess = $process;
-        $process->run(function (string $type, string $buffer) use (&$output, &$errorOutput): void {
+        $process->run(function (string $type, string $buffer) use (&$output, &$errorOutput, $quiet): void {
             if ($type === Process::OUT) {
                 $output .= $buffer;
-                $this->streamOutput($buffer, false);
+
+                if (!$quiet) {
+                    $this->streamOutput($buffer, false);
+                }
             } else {
                 $errorOutput .= $buffer;
-                $this->streamOutput($buffer, true);
+
+                if (!$quiet) {
+                    $this->streamOutput($buffer, true);
+                }
             }
         });
         $this->activeProcess = null;
@@ -77,35 +88,6 @@ final class ShellExecutor implements ExecutorInterface
             errorOutput: $errorOutput,
             duration: $duration,
             command: $display,
-        );
-    }
-
-    /**
-     * Execute a command without streaming output.
-     *
-     * @param list<string>|string                                                    $command
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null} $options
-     */
-    public function executeQuiet(array|string $command, array $options = []): ExecutionResult
-    {
-        $cwdFallback = getcwd();
-        $cwd = $options['cwd'] ?? ($cwdFallback !== false ? $cwdFallback : null);
-        $env = $options['env'] ?? [];
-        $timeout = $options['timeout'] ?? $this->defaultTimeout;
-
-        $startTime = microtime(true);
-
-        $process = $this->createProcess($command, $cwd, $env, $timeout);
-        $process->run();
-
-        $duration = microtime(true) - $startTime;
-
-        return new ExecutionResult(
-            exitCode: $process->getExitCode() ?? 1,
-            output: $process->getOutput(),
-            errorOutput: $process->getErrorOutput(),
-            duration: $duration,
-            command: $this->display($command),
         );
     }
 

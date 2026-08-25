@@ -11,8 +11,9 @@ interface ExecutorInterface
      * to the process directly, with no shell involved, so argument boundaries
      * are preserved; a string is run through a shell, for pipes and redirects.
      *
-     * @param list<string>|string                                                                $command Program and arguments, or a shell command line
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool} $options
+     * @param list<string>|string                                                                              $command Program and arguments, or a shell command line
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool, quiet?: bool} $options
+     *                                                                                                                  `quiet` keeps the output off the terminal; the result still carries it
      *
      * @return ExecutionResult Result with output, error output, and exit code
      */

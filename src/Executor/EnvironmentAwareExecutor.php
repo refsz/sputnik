@@ -16,8 +16,8 @@ final class EnvironmentAwareExecutor implements ExecutorInterface
     }
 
     /**
-     * @param list<string>|string                                                                $command
-     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool} $options
+     * @param list<string>|string                                                                              $command
+     * @param array{cwd?: string, env?: array<string, string>, timeout?: float|null, tty?: bool, quiet?: bool} $options
      */
     public function execute(array|string $command, array $options = []): ExecutionResult
     {
