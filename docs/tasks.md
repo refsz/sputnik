@@ -216,6 +216,29 @@ $version = $ctx->exec(['git', 'rev-parse', 'HEAD'], ['quiet' => true])->getOutpu
 - `tty` -- allocate a TTY (disables timeout automatically)
 - `timeout` -- seconds before the process is killed (default: 300, five minutes). `null` means the default, not "no limit"; pass `0` or `tty: true` to remove the limit
 
+!!! tip "Colour comes along"
+    A tool decides on colour by asking whether its output is a terminal, and
+    through Sputnik it never is -- the output runs through a pipe so it can be
+    captured, masked and indented. Sputnik therefore tells the command what the
+    pipe cannot, with `FORCE_COLOR`, so `composer install` in a task looks like
+    `composer install` in a shell.
+
+    It follows Sputnik's own output, so nothing changes for a redirected run or
+    under `--no-ansi`: a log file stays free of escape codes. `NO_COLOR` works
+    the same way, since it turns Sputnik's own decoration off. Where you
+    contradict yourself -- `NO_COLOR` set and `--ansi` passed -- the flag wins for
+    Sputnik and for the command alike, and a command that honours `NO_COLOR`
+    itself still comes out monochrome.
+
+    A `quiet` command is never coloured -- there the output is a value, and
+    escape codes in a value corrupt whatever reads it.
+
+    Symfony Console and the Node tools both read `FORCE_COLOR`, which covers
+    composer, drush, npm and anything built on either. A tool that only checks
+    for a terminal needs its own flag -- `ls --color=always`, `git -c
+    color.ui=always` -- which a [pass-through task](#pass-through-tasks) can
+    forward.
+
 Returns `ExecutionResult` with:
 
 | Method / Property | Description |

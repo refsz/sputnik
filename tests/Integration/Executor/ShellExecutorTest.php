@@ -21,6 +21,52 @@ final class ShellExecutorTest extends TestCase
         $this->executor = new ShellExecutor();
     }
 
+    public function testAColouredTerminalIsAnnouncedToTheCommand(): void
+    {
+        // A tool decides on colour by asking whether its output is a terminal,
+        // and through Sputnik it never is: the output is captured so it can be
+        // masked, inspected and indented. FORCE_COLOR says what the pipe cannot.
+        $executor = new ShellExecutor($this->channel(decorated: true));
+
+        $result = $executor->execute(['sh', '-c', 'printf "%s" "$FORCE_COLOR"']);
+
+        $this->assertSame('1', $result->getOutput());
+    }
+
+    public function testARedirectedRunLeavesTheCommandMonochrome(): void
+    {
+        // Escape codes in a log file or behind a pipe would be worse than no
+        // colour, so this follows Sputnik's own output.
+        $executor = new ShellExecutor($this->channel(decorated: false));
+
+        $result = $executor->execute(['sh', '-c', 'printf "%s" "$FORCE_COLOR"']);
+
+        $this->assertSame('', $result->getOutput());
+    }
+
+    public function testAQuietCommandIsNeverColoured(): void
+    {
+        // Quiet means the output is a value, not a message. Escape codes in a
+        // value corrupt whatever reads it - a byte comparison, a JSON decode.
+        $executor = new ShellExecutor($this->channel(decorated: true));
+
+        $result = $executor->execute(['sh', '-c', 'printf "%s" "$FORCE_COLOR"'], ['quiet' => true]);
+
+        $this->assertSame('', $result->getOutput());
+    }
+
+    public function testTheTaskKeepsTheLastWordOnTheEnvironment(): void
+    {
+        $executor = new ShellExecutor($this->channel(decorated: true));
+
+        $result = $executor->execute(
+            ['sh', '-c', 'printf "%s" "$FORCE_COLOR"'],
+            ['env' => ['FORCE_COLOR' => '']],
+        );
+
+        $this->assertSame('', $result->getOutput());
+    }
+
     public function testExecuteSuccessfulCommand(): void
     {
         $result = $this->executor->execute('echo "hello world"');
@@ -154,5 +200,31 @@ final class ShellExecutorTest extends TestCase
         $display = $buffer->fetch();
         $this->assertStringContainsString('> echo "done"', $display);
         $this->assertDoesNotMatchRegularExpression('/[✓✗]/', $display);
+    }
+
+    public function testAnExplicitAnsiRequestStillReachesTheCommand(): void
+    {
+        // NO_COLOR in the environment and --ansi on the command line contradict
+        // each other. Symfony resolves that for its own output in favour of the
+        // flag, which is why the channel is decorated here - so Sputnik follows
+        // it rather than colouring its own output while leaving the command's
+        // monochrome. Where the command honours NO_COLOR itself, as Symfony
+        // Console and the Node tools do, it still comes out without colour.
+        $executor = new ShellExecutor($this->channel(decorated: true));
+
+        $result = $executor->execute(['sh', '-c', 'printf "%s" "$FORCE_COLOR"']);
+
+        $this->assertSame('1', $result->getOutput());
+    }
+
+    private function channel(bool $decorated): OutputChannel
+    {
+        $output = new BufferedOutput();
+        $output->setDecorated($decorated);
+
+        $channel = new OutputChannel();
+        $channel->set($output);
+
+        return $channel;
     }
 }

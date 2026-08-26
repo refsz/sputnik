@@ -37,7 +37,6 @@ final class ShellExecutor implements ExecutorInterface
 
         $cwdFallback = getcwd();
         $cwd = $options['cwd'] ?? ($cwdFallback !== false ? $cwdFallback : null);
-        $env = $options['env'] ?? [];
         $tty = $options['tty'] ?? false;
         $timeout = $tty ? 0 : ($options['timeout'] ?? $this->defaultTimeout);
 
@@ -45,6 +44,9 @@ final class ShellExecutor implements ExecutorInterface
         // keep quiet is the output, because it wants it as a value rather than
         // on the terminal.
         $quiet = $options['quiet'] ?? false;
+
+        // The task has the last word: its own value for a variable wins.
+        $env = ($options['env'] ?? []) + $this->colourEnvironment($quiet, $tty);
 
         $this->channel->sputnikOutput()?->command($display);
 
@@ -106,6 +108,45 @@ final class ShellExecutor implements ExecutorInterface
         }
 
         return new Process($command, $cwd, $env, null, $timeout);
+    }
+
+    /**
+     * Tell a command that colour is welcome, when it is.
+     *
+     * A tool decides on colour by asking whether its output is a terminal, and
+     * through Sputnik it never is: everything runs through pipes because the
+     * output has to be captured - to mask secrets in it, to indent it, to put it
+     * on the result. So `composer install` through a task came out monochrome
+     * where the same command in a shell is coloured.
+     *
+     * FORCE_COLOR says what the pipe cannot. Symfony Console reads it, and so do
+     * the Node tools, which covers composer, drush, npm and everything built on
+     * either. It follows Sputnik's own output, so a redirected run or --no-ansi
+     * still writes a clean log, and NO_COLOR needs no handling of its own -
+     * it already turns our own decoration off.
+     *
+     * Not for a quiet command: there the output is a value, and escape codes in
+     * a value corrupt whatever reads it. Not under a tty either, where the
+     * command has the real terminal and decides for itself.
+     *
+     * @return array<string, string>
+     */
+    private function colourEnvironment(bool $quiet, bool $tty): array
+    {
+        if ($quiet || $tty) {
+            return [];
+        }
+
+        if ($this->channel->output()?->isDecorated() !== true) {
+            return [];
+        }
+
+        // Someone who set it themselves has an opinion; leave it alone.
+        if (getenv('FORCE_COLOR') !== false) {
+            return [];
+        }
+
+        return ['FORCE_COLOR' => '1'];
     }
 
     /**
