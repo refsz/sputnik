@@ -21,6 +21,61 @@ final class SecretRedactorTest extends TestCase
         $this->redactor = new SecretRedactor($this->registry);
     }
 
+    public function testAValueSplitByAColourCodeIsStillMasked(): void
+    {
+        // A tool that colours a value puts an escape sequence next to or inside
+        // it, and then the characters are no longer one run for a search to
+        // find. Reachable today: a pass-through task forwards `--ansi`, the tool
+        // honours it, and its output goes through this redactor.
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $redacted = $this->redactor->redact("token=ghp_\033[32mabcdefghij\033[0m done");
+
+        $this->assertStringNotContainsString('abcdefghij', $redacted);
+        $this->assertStringContainsString('***', $redacted);
+    }
+
+    public function testAShortValueWithColourAroundItIsMasked(): void
+    {
+        // The word-boundary rule for a short value looked at the character
+        // before it, and an escape sequence ends in `m` - a word character. So a
+        // highlighted short secret was never redacted at all, which is the worse
+        // half of this: the value arrives whole and still gets through.
+        $this->registry->remember('pin', '1234');
+
+        $redacted = $this->redactor->redact("pin: \033[32m1234\033[0m");
+
+        $this->assertStringNotContainsString('1234', $redacted);
+    }
+
+    public function testMaskingAValueKeepsTheTerminalState(): void
+    {
+        // Dropping the escape sequences with the value would leave the colour
+        // that follows unterminated, so they are kept.
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $redacted = $this->redactor->redact("ghp_\033[32mabcdefghij\033[0m rest");
+
+        $this->assertStringContainsString("\033[0m", $redacted, 'The reset has to survive');
+    }
+
+    public function testAShortValueSplitByAColourCodeIsMaskedAtAWordBoundary(): void
+    {
+        $this->registry->remember('pin', '1234');
+
+        $redacted = $this->redactor->redact("pin is \033[31m12\033[0m34 now");
+
+        $this->assertStringNotContainsString('34 now', $redacted);
+        $this->assertStringContainsString('***', $redacted);
+    }
+
+    public function testAPlainTextIsNotTouchedByTheColourPath(): void
+    {
+        $this->registry->remember('apiToken', 'ghp_abcdefghij');
+
+        $this->assertSame('token=*** done', $this->redactor->redact('token=ghp_abcdefghij done'));
+    }
+
     public function testTextWithoutSecretsIsUnchanged(): void
     {
         $this->registry->remember('apiToken', 'ghp_abcdefghij');
