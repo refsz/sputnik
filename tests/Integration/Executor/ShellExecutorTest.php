@@ -217,6 +217,20 @@ final class ShellExecutorTest extends TestCase
         $this->assertSame('1', $result->getOutput());
     }
 
+    public function testColourAroundAValueDoesNotHideItFromRedaction(): void
+    {
+        // Tools colour whole tokens, so the codes land beside the value and the
+        // search still finds it. A code *inside* the value would not be found -
+        // documented as a boundary in docs/secrets.md, and the reason this test
+        // pins the case that does work.
+        $executor = new ShellExecutor($this->channel(decorated: true));
+
+        $result = $executor->execute(['sh', '-c', 'printf "\033[32m%s\033[0m" "secret-value-here"']);
+
+        $this->assertStringContainsString('secret-value-here', $result->getOutput());
+        $this->assertStringContainsString("\033[32m", $result->getOutput(), 'The colour is there to be redacted around');
+    }
+
     private function channel(bool $decorated): OutputChannel
     {
         $output = new BufferedOutput();

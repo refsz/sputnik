@@ -102,6 +102,14 @@ these are the edges it does not reach.
     the output stream is not matched, since redaction runs per chunk as it
     streams.
 
+    Colour is a variant of that same split. Redaction searches for the value as
+    a run of characters, so a tool that puts an escape sequence *inside* one --
+    highlighting part of a URL differently from the rest, say -- hides it from the
+    search. Codes *around* the value are harmless, which is what tools normally
+    emit, since they colour whole tokens. Where this matters more than the colour
+    does, turn it off for that command with
+    `['env' => ['FORCE_COLOR' => '']]`.
+
     A secret shorter than eight characters is masked at word boundaries, so
     unrelated output may be masked too — and, in the other direction, an
     occurrence inside a longer word is not masked at all: a four-character PIN
